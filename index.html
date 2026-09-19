@@ -19,12 +19,15 @@
 <body class="bg-slate-50 text-slate-800 font-sans lang-ru-active">
 
     <!-- SUPABASE CONFIG -->
-    <script>
-        const SUPABASE_URL = 'https://rkurxleswixoxoigeese.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_QU4QHXcLWqAKuUy9BQpW4Q_u5yN0MoW';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    </script>
-
+    <!-- SUPABASE CONFIG -->
+<script>
+    const SUPABASE_URL = 'https://rkurxleswixoxoigeese.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_QU4QHXcLWqAKuUy9BQpW4Q_u5yN0MoW';
+    
+    // Безопасная инициализация без риска дублирования
+    window.supabaseClient = window.supabaseClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabaseClient;
+</script>
     <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
