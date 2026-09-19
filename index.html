@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>РаботаТч — Фриланс маркетплейс Таджикистана</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .lang-ru, .lang-tj { display: none; }
+        body.lang-ru-active .lang-ru { display: inline; }
+        body.lang-ru-active blockquote.lang-ru, body.lang-ru-active div.lang-ru, body.lang-ru-active p.lang-ru, body.lang-ru-active span.lang-ru { display: block; }
+        body.lang-tj-active .lang-tj { display: inline; }
+        body.lang-tj-active blockquote.lang-tj, body.lang-tj-active div.lang-tj, body.lang-tj-active p.lang-tj, body.lang-tj-active span.lang-tj { display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans lang-ru-active">
+
+    <!-- SUPABASE CONFIG -->
+    <script>
+        const SUPABASE_URL = 'https://rkurxleswixoxoigeese.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_QU4QHXcLWqAKuUy9BQpW4Q_u5yN0MoW';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <!-- HEADER -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="#" onclick="showPage('home')" class="text-2xl font-black text-emerald-600 flex items-center gap-1">
+                Работа<span class="text-amber-500">Тч</span> 🇹🇯
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-6 font-medium text-sm">
+                <a href="#" onclick="showPage('home')" class="hover:text-emerald-600 transition"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+                <a href="#" onclick="showPage('catalog')" class="hover:text-emerald-600 transition"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+                <a href="#" onclick="showPage('useful')" class="hover:text-emerald-600 transition"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+                <a href="#" onclick="showPage('help')" class="hover:text-emerald-600 transition"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+            </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleLang()" class="bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+                    <span id="langLabel">🇹🇯 Тоҷикӣ</span>
+                </button>
+
+                <button onclick="checkAuthAndOpenProfile()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+                    <span class="lang-ru">Вход / Профиль</span><span class="lang-tj">Даромадан / Профил</span>
+                </button>
+
+                <button onclick="toggleBurger()" class="md:hidden p-2 text-slate-700 hover:text-emerald-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="burgerMenu" class="hidden md:hidden bg-white border-t px-4 py-4 space-y-3">
+            <a href="#" onclick="showPage('home'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+            <a href="#" onclick="showPage('catalog'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+            <a href="#" onclick="showPage('useful'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+            <a href="#" onclick="showPage('help'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- 1. HOME PAGE -->
+        <div id="page-home" class="space-y-6">
+            <!-- Mode Switcher -->
+            <div class="flex justify-center mb-6">
+                <div class="bg-slate-200 p-1 rounded-2xl flex gap-1 w-full max-w-md">
+                    <button id="modeWorkBtn" onclick="setMode('work')" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition">
+                        <span class="lang-ru">🔍 Найти работу</span><span class="lang-tj">🔍 Ёфтани кор</span>
+                    </button>
+                    <button id="modeWorkerBtn" onclick="setMode('worker')" class="flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition">
+                        <span class="lang-ru">👷 Найти работника</span><span class="lang-tj">👷 Ёфтани коргар</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters & Search -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <h1 class="text-xl font-black text-slate-900">
+                        <span class="lang-ru">Фильтрация и поиск объявлений</span>
+                        <span class="lang-tj">Ҷустуҷӯ ва филтр кардани эълонҳо</span>
+                    </h1>
+                    <button onclick="openCreateModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition shadow-sm">
+                        <span class="lang-ru">+ Добавить объявление</span><span class="lang-tj">+ Илова кардани эълон</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Поиск по названию..." class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+
+                    <select id="catSelect" onchange="applyFilters()" class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-white">
+                        <option value="">🗂 Все категории</option>
+                        <option value="Сантехника и ремонт">Сантехника и ремонт / Тамир</option>
+                        <option value="IT и программирование">IT и разработка / Барномасозӣ</option>
+                        <option value="Дизайн и графика">Дизайн и графика / Тарроҳӣ</option>
+                        <option value="Строительство">Строительство / Сохтмон</option>
+                        <option value="Репетиторы и обучение">Репетиторы / Омӯзгорон</option>
+                        <option value="Доставка и курьеры">Доставка / Расонидан</option>
+                        <option value="Переводы текстов">Переводы / Тарҷума</option>
+                    </select>
+
+                    <select id="typeSelect" onchange="applyFilters()" class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-white">
+                        <option value="">🌐 Тип: Любой</option>
+                        <option value="remote">Удаленно (Фосилавӣ)</option>
+                        <option value="onsite">На месте (Дар маҳал)</option>
+                    </select>
+
+                    <button onclick="applyFilters()" class="bg-emerald-600 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-700 transition">
+                        <span class="lang-ru">Применить</span><span class="lang-tj">Татбиқ кардан</span>
+                    </button>
+                </div>
+
+                <!-- Regions Cascade -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t">
+                    <select id="regionProv" onchange="updateDistricts(); applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none">
+                        <option value="">📍 Область / Регион</option>
+                        <option value="Душанбе">г. Душанбе</option>
+                        <option value="Согд">Согдийская область (Суғд)</option>
+                        <option value="Хатлон">Хатлонская область (Хатлон)</option>
+                        <option value="ГБАО">ГБАО (ВМКБ)</option>
+                        <option value="РРП">РРП (Районы респ. подчинения)</option>
+                    </select>
+
+                    <select id="regionDist" onchange="updateVillages(); applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none" disabled>
+                        <option value="">🏙 Район / Город</option>
+                    </select>
+
+                    <select id="regionVill" onchange="applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none" disabled>
+                        <option value="">🏡 Кишлак / Джамоат</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Feed Ads -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold text-slate-800">
+                    <span class="lang-ru">Актуальные предложения</span>
+                    <span class="lang-tj">Пешниҳодҳои фаврӣ</span>
+                </h2>
+                <div id="adsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic loaded ads -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. CATALOG PAGE (Каталог услуг с выбором работа/работник) -->
+        <div id="page-catalog" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h1 class="text-3xl font-black">
+                    <span class="lang-ru">Каталог услуг и специалистов</span>
+                    <span class="lang-tj">Катологи хизматрасониҳо ва мутахассисон</span>
+                </h1>
+                <button onclick="openCreateModal()" class="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-emerald-700 transition">
+                    + <span class="lang-ru">Создать заказ</span><span class="lang-tj">Фармоиш эҷод кардан</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div onclick="filterByCategory('Сантехника и ремонт')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">🛠 Сантехника и электрика</h3>
+                    <p class="text-sm text-slate-600 mt-2">Ремонт проводки, кранов, установка сантехники.</p>
+                </div>
+                <div onclick="filterByCategory('IT и программирование')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">💻 Программирование и IT</h3>
+                    <p class="text-sm text-slate-600 mt-2">Создание сайтов, ботов Telegram, баз данных.</p>
+                </div>
+                <div onclick="filterByCategory('Дизайн и графика')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">🎨 Дизайн и реклама</h3>
+                    <p class="text-sm text-slate-600 mt-2">Логотипы, брендинг, баннеры для Kwork и соцсетей.</p>
+                </div>
+                <div onclick="filterByCategory('Строительство')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">🏗 Строительство и ремонт</h3>
+                    <p class="text-sm text-slate-600 mt-2">Отделка, ремонт квартир, штукатурка.</p>
+                </div>
+                <div onclick="filterByCategory('Репетиторы и обучение')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">📚 Репетиторы и курсы</h3>
+                    <p class="text-sm text-slate-600 mt-2">Обучение языкам, математике, программированию.</p>
+                </div>
+                <div onclick="filterByCategory('Доставка и курьеры')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
+                    <h3 class="font-bold text-lg text-emerald-600">🚚 Доставка и курьеры</h3>
+                    <p class="text-sm text-slate-600 mt-2">Быстрая доставка посылок и грузов по городам.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. USEFUL PAGE -->
+        <div id="page-useful" class="hidden space-y-6">
+            <h1 class="text-3xl font-black"><span class="lang-ru">Полезные статьи и советы</span><span class="lang-tj">Мақолаҳо ва маслиҳатҳо</span></h1>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                <h3 class="font-bold text-xl text-slate-900">Как безопасно работать и принимать оплату в Таджикистане?</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">Используйте проверенные местные карты (DC, Эсхата, Алиф) и договаривайтесь о деталях заказа в чате платформы РаботаТч.</p>
+            </div>
+        </div>
+
+        <!-- 4. HELP PAGE (С твоими данными) -->
+        <div id="page-help" class="hidden space-y-6 max-w-2xl mx-auto">
+            <h1 class="text-3xl font-black text-center"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border space-y-4">
+                <h3 class="font-bold text-xl text-slate-900"><span class="lang-ru">Свяжитесь с администрацией</span><span class="lang-tj">Бо маъмурият тамос гиред</span></h3>
+                <p class="text-sm text-slate-600">Если у вас возникли вопросы по работе сайта, предложения или баги, вы можете написать нам напрямую:</p>
+                <div class="space-y-3 pt-2 text-sm font-medium">
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
+                        <span>📞 Телефон:</span> <a href="tel:+992112504410" class="text-emerald-600 font-bold">+992 11 250 4410</a>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
+                        <span>💬 WhatsApp:</span> <a href="https://wa.me/992112504410" target="_blank" class="text-emerald-600 font-bold">+992 11 250 4410</a>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
+                        <span>✈️ Telegram:</span> <a href="https://t.me/techlab_x" target="_blank" class="text-emerald-600 font-bold">@techlab_x</a>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
+                        <span>📧 Gmail:</span> <span class="text-slate-800 font-bold">dovud0300@gmail.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. AUTH & PROFILE -->
+        <div id="page-auth" class="hidden max-w-md mx-auto space-y-6 bg-white p-8 rounded-3xl shadow-sm border">
+            <div id="loggedOutView" class="space-y-4">
+                <h2 id="authTitle" class="text-2xl font-black text-center text-slate-900">Вход в систему</h2>
+                <div id="authError" class="text-red-500 text-xs text-center hidden"></div>
+
+                <input type="email" id="authEmail" placeholder="Email" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                <input type="password" id="authPassword" placeholder="Пароль (новый)" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+
+                <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition">Войти</button>
+
+                <div class="text-center pt-2">
+                    <button onclick="toggleAuthMode()" class="text-xs text-emerald-600 font-semibold hover:underline">
+                        <span id="authToggleText">Нет аккаунта? Зарегистрироваться</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="loggedInView" class="hidden space-y-4 text-center">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto">👤</div>
+                <h2 class="text-xl font-bold text-slate-900" id="userEmailDisplay"></h2>
+                <p class="text-xs text-slate-500">Вы успешно воршли в систему РаботаТч</p>
+
+                <div class="pt-4 space-y-2">
+                    <button onclick="openCreateModal()" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-amber-600 transition">+ Опубликовать заказ</button>
+                    <button onclick="showPage('home')" class="w-full bg-slate-100 font-bold py-2.5 rounded-xl text-sm hover:bg-slate-200 transition">На главную</button>
+                    <button onclick="handleLogout()" class="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-sm hover:bg-red-100 transition">Выйти</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL CREATE AD -->
+    <div id="createModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-black text-slate-900">Создать новое объявление</h3>
+                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-700 font-bold text-xl">✕</button>
+            </div>
+
+            <div id="createError" class="text-red-500 text-xs hidden"></div>
+
+            <input type="text" id="newTitle" placeholder="Название (например: Сантехник срочно)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+            <textarea id="newDesc" placeholder="Подробное описание работы..." rows="3" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <select id="newCat" class="border rounded-xl px-3 py-2 text-sm bg-white outline-none">
+                    <option value="Сантехника и ремонт">Сантехника и ремонт</option>
+                    <option value="IT и программирование">IT и программирование</option>
+                    <option value="Дизайн и графика">Дизайн и графика</option>
+                    <option value="Строительство">Строительство</option>
+                    <option value="Репетиторы и обучение">Репетиторы</option>
+                    <option value="Доставка и курьеры">Доставка</option>
+                    <option value="Переводы текстов">Переводы</option>
+                </select>
+
+                <select id="newType" class="border rounded-xl px-3 py-2 text-sm bg-white outline-none">
+                    <option value="remote">Удаленно (Фосилавӣ)</option>
+                    <option value="onsite">На месте (Дар маҳал)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <select id="modalProv" onchange="updateModalDistricts()" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none">
+                    <option value="">Область</option>
+                    <option value="Душанбе">Душанбе</option>
+                    <option value="Согд">Согд</option>
+                    <option value="Хатлон">Хатлон</option>
+                    <option value="ГБАО">ГБАО</option>
+                    <option value="РРП">РРП</option>
+                </select>
+                <select id="modalDist" onchange="updateModalVillages()" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none" disabled>
+                    <option value="">Район</option>
+                </select>
+                <select id="modalVill" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none" disabled>
+                    <option value="">Кишлак</option>
+                </select>
+            </div>
+
+            <input type="text" id="newPrice" placeholder="Бюджет (например: 200 сомони)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+
+            <button onclick="submitNewAd()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition">Опубликовать</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS & LOGIC -->
+    <script>
+        let currentLang = 'ru';
+        let currentMode = 'work'; // 'work' or 'worker'
+        let allAds = [
+            { id: 1, title: 'Установка смесителя и ремонт труб', desc: 'Нужен опытный мастер в Душанбе для срочного ремонта.', cat: 'Сантехника и ремонт', type: 'onsite', prov: 'Душанбе', dist: 'Сино', vill: 'Гипрозем', price: '150 сомони', mode: 'work' },
+            { id: 2, title: 'Разработка сайта-визитки под ключ', desc: 'Сделаю современный сайт на HTML/JS с адаптивным дизайном.', cat: 'IT и программирование', type: 'remote', prov: 'Душанбе', dist: 'Исмоили Сомони', vill: 'Центр', price: '1200 сомони', mode: 'worker' }
+        ];
+
+        function toggleLang() {
+            const body = document.body;
+            if (currentLang === 'ru') {
+                currentLang = 'tj';
+                body.classList.remove('lang-ru-active');
+                body.classList.add('lang-tj-active');
+                document.getElementById('langLabel').innerText = '🇷🇺 Русский';
+            } else {
+                currentLang = 'ru';
+                body.classList.remove('lang-tj-active');
+                body.classList.add('lang-ru-active');
+                document.getElementById('langLabel').innerText = '🇹🇯 Тоҷикӣ';
+            }
+        }
+
+        function showPage(pageId) {
+            ['home', 'catalog', 'useful', 'help', 'auth'].forEach(p => {
+                document.getElementById('page-' + p).classList.add('hidden');
+            });
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function toggleBurger() {
+            document.getElementById('burgerMenu').classList.toggle('hidden');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const workBtn = document.getElementById('modeWorkBtn');
+            const workerBtn = document.getElementById('modeWorkerBtn');
+            if (mode === 'work') {
+                workBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition";
+                workerBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition";
+            } else {
+                workerBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition";
+                workBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition";
+            }
+            renderAds();
+        }
+
+        // РЕГИОНЫ ТАДЖИКИСТАНА С ПОДРОБНЫМИ РАЙОНАМИ И КИШЛАКАМИ
+        const regionsData = {
+            'Душанбе': {
+                districts: {
+                    'Исмоили Сомони': ['Центр', 'Профсоюзы', 'Зарафшон', 'Шотемур'],
+                    'Фирдавси': ['Текстильщик', 'Карабах', 'Южный', 'Заводской'],
+                    'Шохмансур': ['Аэропорт', 'Вокзал', 'Промзона', 'Заря'],
+                    'Сино': ['Гипрозем', '82-й микрорайон', 'Зеленова', 'Медколледж']
+                }
+            },
+            'Согд': {
+                districts: {
+                    'Худжанд': ['Чашмаи Маҳзар', 'Панчшанбе', 'Меваи Гул', 'Дарёбод'],
+                    'Б. Гафуров': ['Истиклол', 'Хайдар Усмонов', 'Гулхона', 'Унджи'],
+                    'Канибадам': ['Побкор', 'Лоиқ Шерали', 'Хладокомбинат', 'Конибодом деҳ'],
+                    'Исфара': ['Чоркӯҳ', 'Ворух', 'Шӯроб', 'Лаккон'],
+                    'Истаравшан': ['Гулистон', 'Кандак', 'Қалъачаи Калон']
+                }
+            },
+            'Хатлон': {
+                districts: {
+                    'Бохтар': ['Вахш', 'Село Октябрь', 'Гулрез', 'Меҳробод'],
+                    'Куляб': ['Центр', 'Испечак', 'Дахана', 'Зираки'],
+                    'Яван': ['Яван', 'Сиёма', 'Хайёт', 'Навобод'],
+                    'Джайхун': ['Пяндж', 'Истиклол', 'Ваҳдат']
+                }
+            },
+            'ГБАО': {
+                districts: {
+                    'Хорог': ['Тем', 'Шотланд', 'Севин', 'Бархорог'],
+                    'Ишкашим': ['Намадгут', 'Вранг', 'Зонг', 'Шитхар'],
+                    'Мургаб': ['Қайроқ', 'Акбеит', 'Кызылработ']
+                }
+            },
+            'РРП': {
+                districts: {
+                    'Вахдат': ['Ромит', 'Каттабулак', 'Джигаран', 'Баҳористон'],
+                    'Турсунзаде': ['Регар', 'Пахтакор', 'Қаратоғ', 'Сешанбе'],
+                    'Рудаки': ['Сомониён', 'Кофарниҳон', 'Чортеппа', 'Ляур']
+                }
+            }
+        };
+
+        function updateDistricts() {
+            const prov = document.getElementById('regionProv').value;
+            const dist = document.getElementById('regionDist');
+            const vill = document.getElementById('regionVill');
+            dist.innerHTML = '<option value="">🏙 Район / Город</option>';
+            vill.innerHTML = '<option value="">🏡 Кишлак / Джамоат</option>';
+            dist.disabled = true;
+            vill.disabled = true;
+
+            if (prov && regionsData[prov]) {
+                dist.disabled = false;
+                for (let d in regionsData[prov].districts) {
+                    dist.innerHTML += `<option value="${d}">${d}</option>`;
+                }
+            }
+        }
+
+        function updateVillages() {
+            const prov = document.getElementById('regionProv').value;
+            const dVal = document.getElementById('regionDist').value;
+            const vill = document.getElementById('regionVill');
+            vill.innerHTML = '<option value="">🏡 Кишлак / Джамоат</option>';
+            vill.disabled = true;
+
+            if (prov && dVal && regionsData[prov].districts[dVal]) {
+                vill.disabled = false;
+                regionsData[prov].districts[dVal].forEach(v => {
+                    vill.innerHTML += `<option value="${v}">${v}</option>`;
+                });
+            }
+        }
+
+        // Модальные селекты регионов
+        function updateModalDistricts() {
+            const prov = document.getElementById('modalProv').value;
+            const dist = document.getElementById('modalDist');
+            const vill = document.getElementById('modalVill');
+            dist.innerHTML = '<option value="">Район</option>';
+            vill.innerHTML = '<option value="">Кишлак</option>';
+            dist.disabled = true;
+            vill.disabled = true;
+            if (prov && regionsData[prov]) {
+                dist.disabled = false;
+                for (let d in regionsData[prov].districts) {
+                    dist.innerHTML += `<option value="${d}">${d}</option>`;
+                }
+            }
+        }
+
+        function updateModalVillages() {
+            const prov = document.getElementById('modalProv').value;
+            const dVal = document.getElementById('modalDist').value;
+            const vill = document.getElementById('modalVill');
+            vill.innerHTML = '<option value="">Кишлак</option>';
+            vill.disabled = true;
+            if (prov && dVal && regionsData[prov].districts[dVal]) {
+                vill.disabled = false;
+                regionsData[prov].districts[dVal].forEach(v => {
+                    vill.innerHTML += `<option value="${v}">${v}</option>`;
+                });
+            }
+        }
+
+        // Рендер и фильтрация объявлений
+        function renderAds(filtered = null) {
+            const container = document.getElementById('adsList');
+            container.innerHTML = '';
+            let list = filtered || allAds;
+
+            // Фильтрация по режиму (найти работу / работника)
+            list = list.filter(ad => ad.mode === currentMode);
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">Объявлений пока нет. Будьте первыми!</div>`;
+                return;
+            }
+
+            list.forEach(ad => {
+                container.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <span class="bg-emerald-50 text-emerald-600 text-xs font-bold px-2.5 py-1 rounded-lg">${ad.cat}</span>
+                            <h3 class="font-bold text-lg mt-2 text-slate-900">${ad.title}</h3>
+                            <p class="text-sm text-slate-600 mt-1">${ad.desc}</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t flex items-center justify-between">
+                            <span class="text-amber-600 font-extrabold">${ad.price}</span>
+                            <span class="text-xs text-slate-400">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : ''}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const cat = document.getElementById('catSelect').value;
+            const type = document.getElementById('typeSelect').value;
+            const prov = document.getElementById('regionProv').value;
+            const dist = document.getElementById('regionDist').value;
+
+            let result = allAds.filter(ad => {
+                let matchSearch = ad.title.toLowerCase().includes(search) || ad.desc.toLowerCase().includes(search);
+                let matchCat = cat === '' || ad.cat === cat;
+                let matchType = type === '' || ad.type === type; // УДАЛЕННЫЕ / НА МЕСТЕ
+                let matchProv = prov === '' || ad.prov === prov;
+                let matchDist = dist === '' || ad.dist === dist;
+                return matchSearch && matchCat && matchType && matchProv && matchDist;
+            });
+
+            renderAds(result);
+        }
+
+        function filterByCategory(categoryName) {
+            document.getElementById('catSelect').value = categoryName;
+            showPage('home');
+            applyFilters();
+        }
+
+        // Модалка создания
+        function openCreateModal() {
+            document.getElementById('createModal').classList.remove('hidden');
+        }
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+        }
+
+        function submitNewAd() {
+            const title = document.getElementById('newTitle').value;
+            const desc = document.getElementById('newDesc').value;
+            const cat = document.getElementById('newCat').value;
+            const type = document.getElementById('newType').value;
+            const prov = document.getElementById('modalProv').value;
+            const dist = document.getElementById('modalDist').value;
+            const vill = document.getElementById('modalVill').value;
+            const price = document.getElementById('newPrice').value;
+            const err = document.getElementById('createError');
+
+            if (!title || !desc || !price) {
+                err.innerText = 'Заполните обязательные поля!';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            allAds.unshift({
+                id: Date.now(),
+                title, desc, cat, type, prov, dist, vill, price, mode: currentMode
+            });
+
+            closeCreateModal();
+            renderAds();
+            alert('Объявление успешно опубликовано!');
+        }
+
+        // Авторизация
+        let isSignUpMode = false;
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const btn = document.getElementById('authSubmitBtn');
+            const title = document.getElementById('authTitle');
+            const toggleText = document.getElementById('authToggleText');
+            if (isSignUpMode) {
+                title.innerText = 'Регистрация аккаунта';
+                btn.innerText = 'Зарегистрироваться';
+                toggleText.innerText = 'Уже есть аккаунт? Войти';
+            } else {
+                title.innerText = 'Вход в систему';
+                btn.innerText = 'Войти';
+                toggleText.innerText = 'Нет аккаунта? Зарегистрироваться';
+            }
+        }
+
+        async function checkAuthAndOpenProfile() {
+            showPage('auth');
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById('loggedOutView').classList.add('hidden');
+                document.getElementById('loggedInView').classList.remove('hidden');
+                document.getElementById('userEmailDisplay').innerText = session.user.email;
+            } else {
+                document.getElementById('loggedInView').classList.add('hidden');
+                document.getElementById('loggedOutView').classList.remove('hidden');
+            }
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errBox = document.getElementById('authError');
+            errBox.classList.add('hidden');
+
+            if (!email || !password) {
+                errBox.innerText = 'Заполните все поля!';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            if (isSignUpMode) {
+                const { error } = await supabase.auth.signUp({ email, password });
+                if (error) { errBox.innerText = error.message; errBox.classList.remove('hidden'); }
+                else { alert('Регистрация успешна!'); checkAuthAndOpenProfile(); }
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) { errBox.innerText = 'Неверный email или пароль'; errBox.classList.remove('hidden'); }
+                else { checkAuthAndOpenProfile(); }
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            checkAuthAndOpenProfile();
+        }
+
+        // Инициализация при загрузке
+        renderAds();
+    </script>
+</body>
+</html>
