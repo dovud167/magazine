@@ -6,8 +6,41 @@
     <title>РаботаТч — Фриланс маркетплейс Таджикистана</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- FIREBASE SDK (Модульная версия с поддержкой script type="module") -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+        // Твои ключи Firebase со скриншота
+        const firebaseConfig = {
+            apiKey: "AIzaSyABiIZdxphBUTsByYaf_wMIDxNtbM2i2Po",
+            authDomain: "rabota-tj.firebaseapp.com",
+            projectId: "rabota-tj",
+            storageBucket: "rabota-tj.firebasestorage.app",
+            messagingSenderId: "208860953928",
+            appId: "1:208860953928:web:975bccc89bc0bf32bac77d",
+            measurementId: "G-12YKSNPWS4"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Делаем auth глобальным для доступа из других функций
+        window.firebaseAuth = auth;
+        window.fbSignIn = signInWithEmailAndPassword;
+        window.fbSignUp = createUserWithEmailAndPassword;
+        window.fbSignOut = signOut;
+        window.fbOnStateChanged = onAuthStateChanged;
+    </script>
+
     <style>
         .lang-ru, .lang-tj { display: none; }
         body.lang-ru-active .lang-ru { display: inline; }
@@ -18,16 +51,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans lang-ru-active">
 
-    <!-- SUPABASE CONFIG -->
-    <!-- SUPABASE CONFIG -->
-<script>
-    const SUPABASE_URL = 'https://rkurxleswixoxoigeese.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_QU4QHXcLWqAKuUy9BQpW4Q_u5yN0MoW';
-    
-    // Безопасная инициализация без риска дублирования
-    window.supabaseClient = window.supabaseClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const supabase = window.supabaseClient;
-</script>
     <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -157,7 +180,7 @@
             </div>
         </div>
 
-        <!-- 2. CATALOG PAGE (Каталог услуг с выбором работа/работник) -->
+        <!-- 2. CATALOG PAGE -->
         <div id="page-catalog" class="hidden space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 class="text-3xl font-black">
@@ -206,7 +229,7 @@
             </div>
         </div>
 
-        <!-- 4. HELP PAGE (С твоими данными) -->
+        <!-- 4. HELP PAGE -->
         <div id="page-help" class="hidden space-y-6 max-w-2xl mx-auto">
             <h1 class="text-3xl font-black text-center"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
             <div class="bg-white p-8 rounded-3xl shadow-sm border space-y-4">
@@ -236,7 +259,7 @@
                 <div id="authError" class="text-red-500 text-xs text-center hidden"></div>
 
                 <input type="email" id="authEmail" placeholder="Email" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
-                <input type="password" id="authPassword" placeholder="Пароль (новый)" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                <input type="password" id="authPassword" placeholder="Пароль" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
 
                 <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition">Войти</button>
 
@@ -250,7 +273,7 @@
             <div id="loggedInView" class="hidden space-y-4 text-center">
                 <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto">👤</div>
                 <h2 class="text-xl font-bold text-slate-900" id="userEmailDisplay"></h2>
-                <p class="text-xs text-slate-500">Вы успешно воршли в систему РаботаТч</p>
+                <p class="text-xs text-slate-500">Вы успешно воршли в систему РаботаТч (Firebase)</p>
 
                 <div class="pt-4 space-y-2">
                     <button onclick="openCreateModal()" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-amber-600 transition">+ Опубликовать заказ</button>
@@ -318,7 +341,7 @@
     <!-- SCRIPTS & LOGIC -->
     <script>
         let currentLang = 'ru';
-        let currentMode = 'work'; // 'work' or 'worker'
+        let currentMode = 'work';
         let allAds = [
             { id: 1, title: 'Установка смесителя и ремонт труб', desc: 'Нужен опытный мастер в Душанбе для срочного ремонта.', cat: 'Сантехника и ремонт', type: 'onsite', prov: 'Душанбе', dist: 'Сино', vill: 'Гипрозем', price: '150 сомони', mode: 'work' },
             { id: 2, title: 'Разработка сайта-визитки под ключ', desc: 'Сделаю современный сайт на HTML/JS с адаптивным дизайном.', cat: 'IT и программирование', type: 'remote', prov: 'Душанбе', dist: 'Исмоили Сомони', vill: 'Центр', price: '1200 сомони', mode: 'worker' }
@@ -365,7 +388,6 @@
             renderAds();
         }
 
-        // РЕГИОНЫ ТАДЖИКИСТАНА С ПОДРОБНЫМИ РАЙОНАМИ И КИШЛАКАМИ
         const regionsData = {
             'Душанбе': {
                 districts: {
@@ -440,7 +462,6 @@
             }
         }
 
-        // Модальные селекты регионов
         function updateModalDistricts() {
             const prov = document.getElementById('modalProv').value;
             const dist = document.getElementById('modalDist');
@@ -471,13 +492,10 @@
             }
         }
 
-        // Рендер и фильтрация объявлений
         function renderAds(filtered = null) {
             const container = document.getElementById('adsList');
             container.innerHTML = '';
             let list = filtered || allAds;
-
-            // Фильтрация по режиму (найти работу / работника)
             list = list.filter(ad => ad.mode === currentMode);
 
             if (list.length === 0) {
@@ -512,7 +530,7 @@
             let result = allAds.filter(ad => {
                 let matchSearch = ad.title.toLowerCase().includes(search) || ad.desc.toLowerCase().includes(search);
                 let matchCat = cat === '' || ad.cat === cat;
-                let matchType = type === '' || ad.type === type; // УДАЛЕННЫЕ / НА МЕСТЕ
+                let matchType = type === '' || ad.type === type;
                 let matchProv = prov === '' || ad.prov === prov;
                 let matchDist = dist === '' || ad.dist === dist;
                 return matchSearch && matchCat && matchType && matchProv && matchDist;
@@ -527,7 +545,6 @@
             applyFilters();
         }
 
-        // Модалка создания
         function openCreateModal() {
             document.getElementById('createModal').classList.remove('hidden');
         }
@@ -562,7 +579,7 @@
             alert('Объявление успешно опубликовано!');
         }
 
-        // Авторизация
+        // Авторизация Firebase
         let isSignUpMode = false;
         function toggleAuthMode() {
             isSignUpMode = !isSignUpMode;
@@ -580,13 +597,16 @@
             }
         }
 
-        async function checkAuthAndOpenProfile() {
+        function checkAuthAndOpenProfile() {
             showPage('auth');
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
+            const auth = window.firebaseAuth;
+            if (!auth) return;
+            
+            const user = auth.currentUser;
+            if (user) {
                 document.getElementById('loggedOutView').classList.add('hidden');
                 document.getElementById('loggedInView').classList.remove('hidden');
-                document.getElementById('userEmailDisplay').innerText = session.user.email;
+                document.getElementById('userEmailDisplay').innerText = user.email;
             } else {
                 document.getElementById('loggedInView').classList.add('hidden');
                 document.getElementById('loggedOutView').classList.remove('hidden');
@@ -605,23 +625,28 @@
                 return;
             }
 
-            if (isSignUpMode) {
-                const { error } = await supabase.auth.signUp({ email, password });
-                if (error) { errBox.innerText = error.message; errBox.classList.remove('hidden'); }
-                else { alert('Регистрация успешна!'); checkAuthAndOpenProfile(); }
-            } else {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) { errBox.innerText = 'Неверный email или пароль'; errBox.classList.remove('hidden'); }
-                else { checkAuthAndOpenProfile(); }
+            try {
+                const auth = window.firebaseAuth;
+                if (isSignUpMode) {
+                    await window.fbSignUp(auth, email, password);
+                    alert('Регистрация успешна!');
+                    checkAuthAndOpenProfile();
+                } else {
+                    await window.fbSignIn(auth, email, password);
+                    checkAuthAndOpenProfile();
+                }
+            } catch (error) {
+                errBox.innerText = 'Ошибка: ' + error.message;
+                errBox.classList.remove('hidden');
             }
         }
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            const auth = window.firebaseAuth;
+            await window.fbSignOut(auth);
             checkAuthAndOpenProfile();
         }
 
-        // Инициализация при загрузке
         renderAds();
     </script>
 </body>
