@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>РаботаТч — Фриланс маркетплейс Таджикистана</title>
+    <title>TJWORK — Фриланс маркетплейс Таджикистана</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -19,8 +19,11 @@
             GoogleAuthProvider,
             FacebookAuthProvider,
             OAuthProvider,
-            signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+            signInWithPopup,
+            updatePassword,
+            EmailAuthProvider,
+            reauthenticateWithCredential
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyABIlZDxpHBUtSbYYaf_wMIDxNtbM2i2Po",
@@ -44,6 +47,9 @@
         window.fbSignUp = createUserWithEmailAndPassword;
         window.fbSignOut = signOut;
         window.fbOnStateChanged = onAuthStateChanged;
+        window.updatePasswordFirebase = updatePassword;
+        window.EmailAuthProvider = EmailAuthProvider;
+        window.reauthenticateWithCredential = reauthenticateWithCredential;
 
         window.loginWithSocial = async (providerName) => {
             let provider;
@@ -53,13 +59,25 @@
 
             try {
                 await signInWithPopup(auth, provider);
-                checkAuthAndOpenProfile();
+                onAuthSuccessful();
             } catch (error) {
                 const errBox = document.getElementById('authError');
                 errBox.innerText = 'Ошибка: ' + error.message;
                 errBox.classList.remove('hidden');
             }
         };
+
+        // Слушатель состояния авторизации Firebase
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                updateHeaderAuthButton(true, user);
+                syncUserProfileFromFirebase(user);
+            } else {
+                window.currentUser = null;
+                updateHeaderAuthButton(false, null);
+            }
+        });
     </script>
 
     <style>
@@ -70,34 +88,37 @@
         body.lang-tj-active blockquote.lang-tj, body.lang-tj-active div.lang-tj, body.lang-tj-active p.lang-tj, body.lang-tj-active span.lang-tj { display: block; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans lang-ru-active">
+<body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active">
 
     <!-- HEADER -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="#" onclick="showPage('home')" class="text-2xl font-black text-emerald-600 flex items-center gap-1">
-                Работа<span class="text-amber-500">Тч</span> 🇹🇯
-            </a>
+    <header class="bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="#" onclick="showPage('home')" class="text-3xl font-black tracking-tighter text-white flex items-center">
+                    TJWORK<span class="text-emerald-400 font-normal">.</span>
+                </a>
 
-            <!-- Desktop Nav -->
-            <nav class="hidden md:flex items-center gap-6 font-medium text-sm">
-                <a href="#" onclick="showPage('home')" class="hover:text-emerald-600 transition"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
-                <a href="#" onclick="showPage('catalog')" class="hover:text-emerald-600 transition"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
-                <a href="#" onclick="showPage('useful')" class="hover:text-emerald-600 transition"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
-                <a href="#" onclick="showPage('help')" class="hover:text-emerald-600 transition"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
-            </nav>
+                <nav class="hidden lg:flex items-center gap-6 font-medium text-sm text-slate-300">
+                    <a href="#" onclick="showPage('home')" class="hover:text-emerald-400 transition"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+                    <a href="#" onclick="showPage('catalog')" class="hover:text-emerald-400 transition"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+                    <a href="#" onclick="showPage('useful')" class="hover:text-emerald-400 transition"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+                    <a href="#" onclick="showPage('help')" class="hover:text-emerald-400 transition"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+                </nav>
+            </div>
 
-            <!-- Actions -->
-            <div class="flex items-center gap-3">
-                <button onclick="toggleLang()" class="bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleLang()" class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 text-slate-200 transition">
                     <span id="langLabel">🇹🇯 Тоҷикӣ</span>
                 </button>
 
-                <button onclick="checkAuthAndOpenProfile()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
-                    <span class="lang-ru">Вход / Профиль</span><span class="lang-tj">Даромадан / Профил</span>
-                </button>
+                <!-- ДИНАМИЧЕСКАЯ КНОПКА ВХОД / ПРОФИЛЬ -->
+                <div id="headerAuthBtnContainer">
+                    <button onclick="openAuthModal()" id="mainAuthNavBtn" class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
+                        <span class="lang-ru">Вход</span><span class="lang-tj">Ворид шудан</span>
+                    </button>
+                </div>
 
-                <button onclick="toggleBurger()" class="md:hidden p-2 text-slate-700 hover:text-emerald-600">
+                <button onclick="toggleBurger()" class="lg:hidden p-2 text-slate-300 hover:text-emerald-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -105,196 +126,454 @@
             </div>
         </div>
 
-        <!-- Mobile Menu -->
-        <div id="burgerMenu" class="hidden md:hidden bg-white border-t px-4 py-4 space-y-3">
-            <a href="#" onclick="showPage('home'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
-            <a href="#" onclick="showPage('catalog'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
-            <a href="#" onclick="showPage('useful'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
-            <a href="#" onclick="showPage('help'); toggleBurger();" class="block font-medium py-1"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+        <div id="burgerMenu" class="hidden lg:hidden bg-[#111827] border-t border-slate-800 px-4 py-4 space-y-3">
+            <a href="#" onclick="showPage('home'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+            <a href="#" onclick="showPage('catalog'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+            <a href="#" onclick="showPage('useful'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+            <a href="#" onclick="showPage('help'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
         </div>
     </header>
 
+    <!-- БАННЕР -->
+    <section class="relative w-full h-[520px] md:h-[600px] flex items-center justify-center overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80" alt="Freelance Tajikistan" class="absolute inset-0 w-full h-full object-cover opacity-30">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/60 to-transparent"></div>
+
+        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6">
+            
+            <span id="bannerBadge" class="inline-block bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs md:text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest backdrop-blur-md">
+                <span class="lang-ru">Поиск работы во фрилансе</span>
+                <span class="lang-tj">Ҷустуҷӯи кор дар фриланс</span>
+            </span>
+
+            <h1 id="bannerTitle" class="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
+                <span class="lang-ru">Найди работу или закажи услуги в Тоҷикистон</span>
+                <span class="lang-tj">Кор пайдо кунед ё хизматрасони фармоиш диҳед</span>
+            </h1>
+
+            <p id="bannerDesc" class="text-slate-300 text-sm md:text-lg max-w-2xl mx-auto font-medium">
+                <span class="lang-ru">Выполняйте задания и получайте оплату.</span>
+                <span class="lang-tj">Вазифаҳоро иҷро кунед ва музд гиред.</span>
+            </p>
+
+            <div id="homeHeroControls" class="flex flex-col items-center gap-4 pt-2">
+                <div class="bg-slate-900/80 backdrop-blur-md p-1.5 rounded-2xl flex gap-2 w-full max-w-md border border-slate-800 shadow-2xl">
+                    <button id="modeWorkBtn" onclick="setMode('work')" class="flex-1 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950 shadow-md transition">
+                        <span class="lang-ru">💼 Найти работу</span><span class="lang-tj">💼 Ёфтани кор</span>
+                    </button>
+                    <button id="modeWorkerBtn" onclick="setMode('worker')" class="flex-1 py-3.5 px-4 rounded-xl font-bold text-sm text-slate-300 hover:text-white transition">
+                        <span class="lang-ru">🔍 Найти работника</span><span class="lang-tj">🔍 Ёфтани коргар</span>
+                    </button>
+                </div>
+
+                <button onclick="openCreateModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-2xl text-sm transition shadow-lg flex items-center gap-2 transform hover:scale-105">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg> 
+                    <span class="lang-ru">Добавить объявление</span><span class="lang-tj">Илова кардани эълон</span>
+                </button>
+            </div>
+
+        </div>
+    </section>
+
     <!-- MAIN CONTENT -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main id="mainContent" class="max-w-7xl mx-auto px-4 py-8">
 
         <!-- 1. HOME PAGE -->
         <div id="page-home" class="space-y-6">
-            <div class="flex justify-center mb-6">
-                <div class="bg-slate-200 p-1 rounded-2xl flex gap-1 w-full max-w-md">
-                    <button id="modeWorkBtn" onclick="setMode('work')" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition">
-                        <span class="lang-ru">🔍 Найти работу</span><span class="lang-tj">🔍 Ёфтани кор</span>
-                    </button>
-                    <button id="modeWorkerBtn" onclick="setMode('worker')" class="flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition">
-                        <span class="lang-ru">👷 Найти работника</span><span class="lang-tj">👷 Ёфтани коргар</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Filters & Search -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <div id="homeFiltersBlock" class="bg-[#111827] p-6 rounded-3xl shadow-lg border border-slate-800 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h1 class="text-xl font-black text-slate-900">
+                    <h2 class="text-xl font-black text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         <span class="lang-ru">Фильтрация и поиск объявлений</span>
                         <span class="lang-tj">Ҷустуҷӯ ва филтр кардани эълонҳо</span>
-                    </h1>
-                    <button onclick="openCreateModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition shadow-sm">
-                        <span class="lang-ru">+ Добавить объявление</span><span class="lang-tj">+ Илова кардани эълон</span>
-                    </button>
+                    </h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Поиск по названию..." class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Поиск по тексту..." class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-emerald-500">
+                    </div>
 
-                    <select id="catSelect" onchange="applyFilters()" class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-white">
-                        <option value="">🗂 Все категории</option>
-                        <option value="Сантехника и ремонт">Сантехника и ремонт / Тамир</option>
-                        <option value="IT и программирование">IT и разработка / Барномасозӣ</option>
-                        <option value="Дизайн и графика">Дизайн и графика / Тарроҳӣ</option>
-                        <option value="Строительство">Строительство / Сохтмон</option>
-                        <option value="Репетиторы и обучение">Репетиторы / Омӯзгорон</option>
-                        <option value="Доставка и курьеры">Доставка / Расонидан</option>
-                        <option value="Переводы текстов">Переводы / Тарҷума</option>
+                    <select id="typeSelect" onchange="onTypeChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <option value="">🌐 Тип: Любой / Намуд: Ҳама</option>
+                        <option value="remote">💻 Удаленно (Фосилавӣ)</option>
+                        <option value="onsite">🏢 На месте (Дар маҳал)</option>
                     </select>
 
-                    <select id="typeSelect" onchange="applyFilters()" class="border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-white">
-                        <option value="">🌐 Тип: Любой</option>
-                        <option value="remote">Удаленно (Фосилавӣ)</option>
-                        <option value="onsite">На месте (Дар маҳал)</option>
+                    <select id="catSelect" onchange="applyFilters()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <option value="">📂 Все категории / Ҳама категорияҳо</option>
                     </select>
-
-                    <button onclick="applyFilters()" class="bg-emerald-600 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-700 transition">
-                        <span class="lang-ru">Применить</span><span class="lang-tj">Татбиқ кардан</span>
-                    </button>
                 </div>
 
-                <!-- Regions Cascade -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t">
-                    <select id="regionProv" onchange="updateDistricts(); applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none">
-                        <option value="">📍 Область / Регион</option>
-                        <option value="Душанбе">г. Душанбе</option>
-                        <option value="Согд">Согдийская область (Суғд)</option>
-                        <option value="Хатлон">Хатлонская область (Хатлон)</option>
-                        <option value="ГБАО">ГБАО (ВМКБ)</option>
-                        <option value="РРП">РРП (Районы респ. подчинения)</option>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
+                    <select id="regionProv" onchange="updateDistricts(); applyFilters();" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                        <option value="">📍 Область / Город / Вилоят</option>
+                        <option value="Душанбе">🏙 г. Душанбе</option>
+                        <option value="Худжанд">🏙 г. Худжанд</option>
+                        <option value="Согд">📍 Согдийская область (Суғд)</option>
+                        <option value="Хатлон">📍 Хатлонская область (Хатлон)</option>
+                        <option value="ГБАО">📍 ГБАО (ВМКБ)</option>
+                        <option value="РРП">📍 РРП (Ноҳияҳои тобеи марказ)</option>
+                        <option value="Бохтар">🏙 г. Бохтар</option>
+                        <option value="Куляб">🏙 г. Куляб</option>
+                        <option value="Истаравшан">🏙 г. Истаравшан</option>
+                        <option value="Турсунзаде">🏙 г. Турсунзаде</option>
+                        <option value="Вахдат">🏙 г. Ваҳдат</option>
+                        <option value="Канибадам">🏙 г. Конибодом</option>
+                        <option value="Исфара">🏙 г. Исфара</option>
                     </select>
 
-                    <select id="regionDist" onchange="updateVillages(); applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none" disabled>
-                        <option value="">🏙 Район / Город</option>
+                    <select id="regionDist" onchange="updateVillages(); applyFilters();" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" disabled>
+                        <option value="">🏘 Район / Микрорайон</option>
                     </select>
 
-                    <select id="regionVill" onchange="applyFilters();" class="border rounded-xl px-4 py-2 text-sm bg-white outline-none" disabled>
-                        <option value="">🏡 Кишлак / Джамоат</option>
+                    <select id="regionVill" onchange="applyFilters();" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" disabled>
+                        <option value="">🏡 Джамоат / Деҳа / Кишлак</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Feed Ads -->
             <div class="space-y-4">
-                <h2 class="text-xl font-bold text-slate-800">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                     <span class="lang-ru">Актуальные предложения</span>
                     <span class="lang-tj">Пешниҳодҳои фаврӣ</span>
-                </h2>
+                </h3>
                 <div id="adsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
         </div>
 
-        <!-- 2. CATALOG PAGE -->
+        <!-- 2. CATALOG MAIN PAGE -->
         <div id="page-catalog" class="hidden space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 class="text-3xl font-black">
+                <h1 class="text-3xl font-black text-white">
                     <span class="lang-ru">Каталог услуг и специалистов</span>
                     <span class="lang-tj">Катологи хизматрасониҳо ва мутахассисон</span>
                 </h1>
-                <button onclick="openCreateModal()" class="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-emerald-700 transition">
-                    + <span class="lang-ru">Создать заказ</span><span class="lang-tj">Фармоиш эҷод кардан</span>
+                <button onclick="openCreateModal()" class="bg-emerald-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-emerald-400 transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+                    <span class="lang-ru">Создать заказ</span><span class="lang-tj">Фармоиш эҷод кардан</span>
                 </button>
             </div>
 
+            <!-- 6 карточек категорий для перехода на 6 детальных страниц -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div onclick="filterByCategory('Сантехника и ремонт')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">🛠 Сантехника и электрика</h3>
-                    <p class="text-sm text-slate-600 mt-2">Ремонт проводки, кранов, установка сантехники.</p>
+                <div onclick="openCategoryPage('Сантехника и ремонт')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">🛠 Сантехника и электрика</h3>
+                    <p class="text-sm text-slate-400">Ремонт проводки, кранов, установка сантехники.</p>
                 </div>
-                <div onclick="filterByCategory('IT и программирование')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">💻 Программирование и IT</h3>
-                    <p class="text-sm text-slate-600 mt-2">Создание сайтов, ботов Telegram, баз данных.</p>
+                <div onclick="openCategoryPage('IT и программирование')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">💻 Программирование и IT</h3>
+                    <p class="text-sm text-slate-400">Создание сайтов, ботов Telegram, баз данных.</p>
                 </div>
-                <div onclick="filterByCategory('Дизайн и графика')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">🎨 Дизайн и реклама</h3>
-                    <p class="text-sm text-slate-600 mt-2">Логотипы, брендинг, баннеры для Kwork и соцсетей.</p>
+                <div onclick="openCategoryPage('Дизайн и графика')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">🎨 Дизайн и реклама</h3>
+                    <p class="text-sm text-slate-400">Логотипы, брендинг, баннеры для Kwork и соцсетей.</p>
                 </div>
-                <div onclick="filterByCategory('Строительство')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">🏗 Строительство и ремонт</h3>
-                    <p class="text-sm text-slate-600 mt-2">Отделка, ремонт квартир, штукатурка.</p>
+                <div onclick="openCategoryPage('Строительство')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">🏗 Строительство и ремонт</h3>
+                    <p class="text-sm text-slate-400">Отделка, ремонт квартир, штукатурка.</p>
                 </div>
-                <div onclick="filterByCategory('Репетиторы и обучение')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">📚 Репетиторы и курсы</h3>
-                    <p class="text-sm text-slate-600 mt-2">Обучение языкам, математике, программированию.</p>
+                <div onclick="openCategoryPage('Репетиторы и обучение')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">📚 Репетиторы и курсы</h3>
+                    <p class="text-sm text-slate-400">Обучение языкам, математике, программированию.</p>
                 </div>
-                <div onclick="filterByCategory('Доставка и курьеры')" class="bg-white p-6 rounded-2xl shadow-sm border hover:border-emerald-500 transition cursor-pointer">
-                    <h3 class="font-bold text-lg text-emerald-600">🚚 Доставка и курьеры</h3>
-                    <p class="text-sm text-slate-600 mt-2">Быстрая доставка посылок и грузов по городам.</p>
+                <div onclick="openCategoryPage('Доставка и курьеры')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
+                    <h3 class="font-bold text-lg text-emerald-400">🚚 Доставка и курьеры</h3>
+                    <p class="text-sm text-slate-400">Быстрая доставка посылок и грузов по городам.</p>
                 </div>
             </div>
         </div>
 
-        <!-- 3. USEFUL PAGE -->
+        <!-- 3. ДЕТАЛЬНАЯ СТРАНИЦА ОТДЕЛЬНОЙ КАТЕГОРИИ -->
+        <div id="page-category-detail" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="showPage('catalog')" class="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700 transition">
+                    ← Назад к каталогу
+                </button>
+                <button onclick="openCreateModal()" class="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm hover:bg-amber-400 transition">
+                    + Добавить объявление сюда
+                </button>
+            </div>
+            
+            <div class="bg-[#111827] p-6 rounded-3xl border border-slate-800 space-y-2">
+                <h1 id="catDetailTitle" class="text-2xl md:text-3xl font-black text-white">Категория</h1>
+                <p class="text-sm text-slate-400">Все свежие объявления и специалисты, добавленные в эту категорию пользователями.</p>
+            </div>
+
+            <div id="catDetailAdsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- 4. USEFUL PAGE -->
         <div id="page-useful" class="hidden space-y-6">
-            <h1 class="text-3xl font-black"><span class="lang-ru">Полезные статьи и советы</span><span class="lang-tj">Мақолаҳо ва маслиҳатҳо</span></h1>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                <h3 class="font-bold text-xl text-slate-900">Как безопасно работать и принимать оплату в Таджикистане?</h3>
-                <p class="text-sm text-slate-600 leading-relaxed">Используйте проверенные местные карты (DC, Эсхата, Алиф) и договаривайтесь о деталях заказа в чате платформы РаботаТч.</p>
+            <h1 class="text-3xl font-black text-white"><span class="lang-ru">Полезные статьи и советы</span><span class="lang-tj">Мақолаҳо ва маслиҳатҳо</span></h1>
+            <div class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 space-y-4">
+                <h3 class="font-bold text-xl text-white">Как безопасно работать и принимать оплату в Таджикистане?</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Используйте проверенные местные карты (DC, Эсхата, Алиф) и договаривайтесь о деталях заказа в чате платформы TJWORK.</p>
             </div>
         </div>
 
-        <!-- 4. HELP PAGE -->
+        <!-- 5. HELP PAGE -->
         <div id="page-help" class="hidden space-y-6 max-w-2xl mx-auto">
-            <h1 class="text-3xl font-black text-center"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
-            <div class="bg-white p-8 rounded-3xl shadow-sm border space-y-4">
-                <h3 class="font-bold text-xl text-slate-900"><span class="lang-ru">Свяжитесь с администрацией</span><span class="lang-tj">Бо маъмурият тамос гиред</span></h3>
-                <p class="text-sm text-slate-600">Если у вас возникли вопросы по работе сайта, предложения или баги, вы можете написать нам напрямую:</p>
-                <div class="space-y-3 pt-2 text-sm font-medium">
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
-                        <span>📞 Телефон:</span> <a href="tel:+992112504410" class="text-emerald-600 font-bold">+992 11 250 4410</a>
+            <h1 class="text-3xl font-black text-center text-white"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
+            <div class="bg-[#111827] p-8 rounded-3xl shadow-lg border border-slate-800 space-y-4">
+                <h3 class="font-bold text-xl text-white"><span class="lang-ru">Свяжитесь с администрацией</span><span class="lang-tj">Бо маъмурият тамос гиред</span></h3>
+                <p class="text-sm text-slate-400">Если у вас возникли вопросы по работе сайта, предложения или баги, вы можете написать нам напрямую через защищенные кнопки ниже:</p>
+                
+                <div class="space-y-3 pt-2">
+                    <!-- Кнопка Телефон -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <button onclick="revealContact('phoneContact')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                Телефон
+                            </span>
+                            <span class="text-xs bg-emerald-950 px-2 py-1 rounded text-emerald-300">Нажмите чтобы показать</span>
+                        </button>
+                        <div id="phoneContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300">+992 11 250 4410</span>
+                            <a href="tel:+992112504410" class="bg-emerald-500 text-slate-950 px-3 py-1 rounded-lg font-bold hover:bg-emerald-400">Позвонить</a>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
-                        <span>💬 WhatsApp:</span> <a href="https://wa.me/992112504410" target="_blank" class="text-emerald-600 font-bold">+992 11 250 4410</a>
+
+                    <!-- Кнопка WhatsApp -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <button onclick="revealContact('waContact')" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            WhatsApp
+                        </span>
+                        <span class="text-xs bg-emerald-950 px-2 py-1 rounded text-emerald-300">Нажмите чтобы показать</span>
                     </div>
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
-                        <span>✈️ Telegram:</span> <a href="https://t.me/techlab_x" target="_blank" class="text-emerald-600 font-bold">@techlab_x</a>
+                    <div id="waContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">+992 11 250 4410</span>
+                        <a href="https://wa.me/992112504410" target="_blank" class="bg-emerald-500 text-slate-950 px-3 py-1 rounded-lg font-bold hover:bg-emerald-400">Открыть чат</a>
                     </div>
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border">
-                        <span>📧 Gmail:</span> <span class="text-slate-800 font-bold">dovud0300@gmail.com</span>
+                </div>
+
+                <!-- Кнопка Telegram -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                    <button onclick="revealContact('tgContact')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.261.26-.536.26l.192-3.053 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.654-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/></svg>
+                            Telegram
+                        </span>
+                        <span class="text-xs bg-sky-950 px-2 py-1 rounded text-sky-300">Нажмите чтобы показать</span>
+                    </button>
+                    <div id="tgContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">@techlab_x</span>
+                        <a href="https://t.me/techlab_x" target="_blank" class="bg-sky-500 text-slate-950 px-3 py-1 rounded-lg font-bold hover:bg-sky-400">Написать</a>
+                    </div>
+                </div>
+
+                <!-- Кнопка Instagram -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                    <button onclick="revealContact('instaContact')" class="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-90 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            Instagram
+                        </span>
+                        <span class="text-xs bg-purple-950 px-2 py-1 rounded text-pink-200">Нажмите чтобы показать</span>
+                    </button>
+                    <div id="instaContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">@_mavlonov.10</span>
+                        <a href="https://instagram.com/_mavlonov.10" target="_blank" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-lg font-bold hover:opacity-90">Открыть профиль</a>
+                    </div>
+                </div>
+
+                <!-- Кнопка Facebook -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                    <button onclick="revealContact('fbContact')" class="w-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                            Facebook
+                        </span>
+                        <span class="text-xs bg-blue-950 px-2 py-1 rounded text-blue-200">Нажмите чтобы показать</span>
+                    </button>
+                    <div id="fbContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">ID: 100086152061971</span>
+                        <a href="https://facebook.com/profile.php?id=100086152061971" target="_blank" class="bg-[#1877F2] text-white px-3 py-1 rounded-lg font-bold hover:bg-[#166fe5]">Открыть страницу</a>
+                    </div>
+                </div>
+
+                <!-- Кнопка Gmail -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                    <button onclick="revealContact('emailContact')" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            Gmail
+                        </span>
+                        <span class="text-xs bg-rose-950 px-2 py-1 rounded text-rose-300">Нажмите чтобы показать</span>
+                    </button>
+                    <div id="emailContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">dovud0300@gmail.com</span>
+                        <a href="mailto:dovud0300@gmail.com" class="bg-rose-600 text-white px-3 py-1 rounded-lg font-bold hover:bg-rose-500">Написать письмо</a>
                     </div>
                 </div>
             </div>
+
+        </div>
+    </div>
+
+        <!-- 6. НОВАЯ СТРАНИЦА ПРОФИЛЯ (В стиле Instagram) -->
+        <div id="page-profile" class="hidden space-y-6 max-w-4xl mx-auto">
+            <!-- Шапка профиля в стиле Instagram -->
+            <div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+                
+                <!-- Верхняя часть профиля: Аватар + Статистика + Кнопка ред. -->
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
+                    
+                    <!-- 1. Место для фото профиля (Аватарка) -->
+                    <div class="relative group">
+                        <div class="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 shadow-xl">
+                            <img id="profileAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Avatar" class="w-full h-full object-cover rounded-full bg-slate-900">
+                        </div>
+                        <label for="avatarFileInput" class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold cursor-pointer transition">
+                            Сменить фото
+                        </label>
+                        <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                    </div>
+
+                    <!-- Информация профиля -->
+                    <div class="flex-1 space-y-4 text-center md:text-left w-full">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div>
+                                <h2 id="profileUserEmailTitle" class="text-xl md:text-2xl font-black text-white">user@tjwork.tj</h2>
+                                <p class="text-xs text-emerald-400 font-semibold mt-0.5">✓ Верифицированный фрилансер TJWORK</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <!-- 7. Кнопка Редактировать профиль -->
+                                <button onclick="openEditProfileModal()" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                                    Редактировать профиль
+                                </button>
+                                <!-- Выйти -->
+                                <button onclick="handleLogout()" class="bg-red-500/10 border border-red-500/30 text-red-400 font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-500/20 transition">
+                                    Выйти
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Статистика в стиле инстаграм (объявления, отзывы, рейтинг) -->
+                        <div class="flex justify-center md:justify-start gap-6 py-2 border-y border-slate-800 text-sm">
+                            <div><b id="statAdsCount" class="text-white">0</b> <span class="text-slate-400">объявлений</span></div>
+                            <div><b id="statReviewsCount" class="text-white">0</b> <span class="text-slate-400">отзывов</span></div>
+                            <div><b id="statRating" class="text-amber-400">⭐ 5.0</b> <span class="text-slate-400">рейтинг</span></div>
+                        </div>
+
+                        <!-- 2. Дата рождения, 3. Биография, 4. Номер телефона -->
+                        <div class="space-y-1.5 text-xs md:text-sm text-slate-300">
+                            <div>🎂 <b>День рождения:</b> <span id="profileDisplayDob" class="text-slate-400">02.11.2010</span></div>
+                            <div>📝 <b>О себе (био):</b> <span id="profileDisplayBio" class="text-slate-400">Привет! Я профессиональный специалист на платформе TJWORK. Обращайтесь за качественными услугами.</span></div>
+                            <div>📞 <b>Номер телефона:</b> <span id="profileDisplayPhone" class="text-emerald-400 font-bold">+992 00 000 0000</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Вкладки профиля: 5. Кнопка "Все его объявления" & 6. Отзывы & 8/9. Учетные данные -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="switchProfileTab('ads')" id="tabBtnAds" class="py-3 px-4 rounded-2xl font-bold text-sm bg-emerald-500 text-slate-950 transition shadow-lg">
+                    📦 Мои объявления (<span id="tabAdsCountNum">0</span>)
+                </button>
+                <button onclick="switchProfileTab('reviews')" id="tabBtnReviews" class="py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg">
+                    💬 Отзывы клиентов (<span id="tabReviewsCountNum">0</span>)
+                </button>
+                <button onclick="switchProfileTab('settings')" id="tabBtnSettings" class="py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg">
+                    ⚙️ Безопасность и данные
+                </button>
+            </div>
+
+            <!-- Контент вкладки 1: Объявления пользователя -->
+            <div id="profileTabAds" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-white">Список опубликованных вами объявлений</h3>
+                    <button onclick="openCreateModal()" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-bold hover:bg-emerald-500/20">+ Добавить еще</button>
+                </div>
+                <div id="userAdsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Заполняется JS -->
+                </div>
+            </div>
+
+            <!-- Контент вкладки 2: Отзывы -->
+            <div id="profileTabReviews" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-white">Отзывы других пользователей о вас</h3>
+                    <button onclick="openAddReviewModal()" class="text-xs bg-amber-500 text-slate-950 px-3 py-1.5 rounded-xl font-bold hover:bg-amber-400">+ Оставить отзыв этому профилю</button>
+                </div>
+                <div id="userReviewsContainer" class="space-y-3">
+                    <!-- Заполняется JS -->
+                </div>
+            </div>
+
+            <!-- Контент вкладки 3: 8 & 9. Данные (Gmail, смена пароля, телефон с кнопкой изменить) -->
+            <div id="profileTabSettings" class="hidden space-y-6 bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+                <h3 class="text-xl font-black text-white">Управление аккаунтом и безопасность</h3>
+                
+                <div class="space-y-4">
+                    <!-- Gmail -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">Ваш Gmail (Email аккаунта):</label>
+                        <input type="text" id="settingsEmailInput" readonly class="w-full bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-4 py-3 text-sm outline-none cursor-not-allowed">
+                    </div>
+
+                    <!-- 9. Место для номера с кнопкой изменить номер -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">Номер телефона для связи:</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="settingsPhoneInput" placeholder="+992 00 000 0000" class="flex-1 bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                            <button onclick="savePhoneNumber()" class="bg-emerald-500 text-slate-950 font-bold px-5 py-3 rounded-xl text-sm hover:bg-emerald-400 transition">Изменить номер</button>
+                        </div>
+                    </div>
+
+                    <!-- 8. Сменить пароль через Firebase -->
+                    <div class="pt-4 border-t border-slate-800 space-y-3">
+                        <h4 class="font-bold text-sm text-white">Смена пароля входа</h4>
+                        <div id="passwordChangeError" class="text-red-400 text-xs hidden"></div>
+                        <div id="passwordChangeSuccess" class="text-emerald-400 text-xs hidden"></div>
+
+                        <input type="password" id="currentPasswordInput" placeholder="Текущий пароль (для подтверждения)" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <input type="password" id="newPasswordInput" placeholder="Новый пароль" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        
+                        <button onclick="handleChangePassword()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition">
+                            Сменить пароль через Firebase
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- 5. AUTH & PROFILE -->
-        <div id="page-auth" class="hidden max-w-md mx-auto space-y-6 bg-white p-8 rounded-3xl shadow-sm border">
-            <div id="loggedOutView" class="space-y-4">
-                <h2 id="authTitle" class="text-2xl font-black text-center text-slate-900">Вход в систему</h2>
-                <div id="authError" class="text-red-500 text-xs text-center hidden"></div>
+    </main>
 
-                <!-- Email & Password inputs -->
-                <input type="email" id="authEmail" placeholder="Email" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
-                <input type="password" id="authPassword" placeholder="Пароль" class="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+    <!-- MODAL AUTH -->
+    <div id="authModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-xl">✕</button>
+            
+            <div id="loggedOutView" class="space-y-4 pt-2">
+                <h2 id="authTitle" class="text-2xl font-black text-center text-white">Вход в систему</h2>
+                <div id="authError" class="text-red-400 text-xs text-center hidden"></div>
 
-                <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition">Войти</button>
+                <input type="email" id="authEmail" placeholder="Email" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                <input type="password" id="authPassword" placeholder="Пароль" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+
+                <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition">Войти</button>
 
                 <div class="text-center pt-2">
-                    <button onclick="toggleAuthMode()" class="text-xs text-emerald-600 font-semibold hover:underline">
+                    <button onclick="toggleAuthMode()" class="text-xs text-emerald-400 font-semibold hover:underline">
                         <span id="authToggleText">Нет аккаунта? Зарегистрироваться</span>
                     </button>
                 </div>
 
-                <!-- Круглые реалистичные иконки соцсетей и телефона -->
-                <div class="pt-4 border-t space-y-2">
-                    <p class="text-xs text-center text-slate-400 mb-3">Или войдите через:</p>
-                    
+                <div class="pt-4 border-t border-slate-800 space-y-2">
+                    <p class="text-xs text-center text-slate-500 mb-3">Или войдите через:</p>
                     <div class="flex justify-center items-center gap-4">
-                        <!-- Google -->
-                        <button onclick="loginWithSocial('google')" title="Войти через Google" class="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 shadow-sm transition transform hover:scale-105">
+                        <button onclick="loginWithSocial('google')" title="Google" class="w-12 h-12 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center hover:bg-slate-800 shadow-sm transition transform hover:scale-105">
                             <svg class="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -302,96 +581,165 @@
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                             </svg>
                         </button>
-
-                        <!-- Facebook -->
-                        <button onclick="loginWithSocial('facebook')" title="Войти через Facebook" class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:bg-[#166fe5] shadow-sm transition transform hover:scale-105">
+                        <button onclick="loginWithSocial('facebook')" title="Facebook" class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:bg-[#166fe5] shadow-sm transition transform hover:scale-105">
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
                         </button>
-
-                        <!-- Apple -->
-                        <button onclick="loginWithSocial('apple')" title="Войти через Apple" class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-slate-800 shadow-sm transition transform hover:scale-105">
+                        <button onclick="loginWithSocial('apple')" title="Apple" class="w-12 h-12 rounded-full bg-black text-white border border-slate-700 flex items-center justify-center hover:bg-slate-900 shadow-sm transition transform hover:scale-105">
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
                                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.83 5.09c.62-.75 1.04-1.79.93-2.83-.92.04-2.03.62-2.68 1.37-.56.64-1.06 1.68-.93 2.7 1.04.08 2.06-.51 2.68-1.24z"/>
-                            </svg>
-                        </button>
-
-                        <!-- Phone -->
-                        <button onclick="alert('Для входа по телефону включите Phone Authentication в панели Firebase!')" title="Войти по телефону" class="w-12 h-12 rounded-full bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600 shadow-sm transition transform hover:scale-105">
-                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                             </svg>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div id="loggedInView" class="hidden space-y-4 text-center">
-                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto">👤</div>
-                <h2 class="text-xl font-bold text-slate-900" id="userEmailDisplay"></h2>
-                <p class="text-xs text-slate-500">Вы успешно вошли в систему РаботаТч (Firebase)</p>
-
+            <div id="loggedInView" class="hidden space-y-4 text-center pt-2">
+                <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center text-2xl font-black mx-auto">👤</div>
+                <h2 class="text-xl font-bold text-white" id="userEmailDisplay"></h2>
+                <p class="text-xs text-slate-400">Вы успешно вошли в систему TJWORK (Firebase)</p>
                 <div class="pt-4 space-y-2">
-                    <button onclick="openCreateModal()" class="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-amber-600 transition">+ Опубликовать заказ</button>
-                    <button onclick="showPage('home')" class="w-full bg-slate-100 font-bold py-2.5 rounded-xl text-sm hover:bg-slate-200 transition">На главную</button>
-                    <button onclick="handleLogout()" class="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-sm hover:bg-red-100 transition">Выйти</button>
+                    <button onclick="showPage('profile'); closeAuthModal();" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm hover:bg-emerald-400 transition">Открыть мой профиль</button>
+                    <button onclick="openCreateModal(); closeAuthModal();" class="w-full bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm hover:bg-amber-400 transition">+ Опубликовать заказ</button>
+                    <button onclick="handleLogout()" class="w-full bg-red-500/10 border border-red-500/30 text-red-400 font-bold py-2.5 rounded-xl text-sm hover:bg-red-500/20 transition">Выйти</button>
                 </div>
             </div>
         </div>
+    </div>
 
-    </main>
-
-    <!-- MODAL CREATE AD -->
-    <div id="createModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+    <!-- MODAL EDIT PROFILE -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
             <div class="flex justify-between items-center">
-                <h3 class="text-xl font-black text-slate-900">Создать новое объявление</h3>
-                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-700 font-bold text-xl">✕</button>
+                <h3 class="text-xl font-black text-white">Редактировать профиль</h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-white font-bold text-xl">✕</button>
             </div>
 
-            <div id="createError" class="text-red-500 text-xs hidden"></div>
+            <div class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Дата рождения (примерно 02.11.2010):</label>
+                    <input type="text" id="editDobInput" placeholder="02.11.2010" class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                </div>
 
-            <input type="text" id="newTitle" placeholder="Название (например: Сантехник срочно)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
-            <textarea id="newDesc" placeholder="Подробное описание работы..." rows="3" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Биографический текст (о себе):</label>
+                    <textarea id="editBioInput" rows="3" placeholder="Расскажите о своих навыках..." class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Номер телефона:</label>
+                    <input type="text" id="editPhoneInput" placeholder="+992 00 000 0000" class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <button onclick="saveProfileChanges()" class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition">Сохранить изменения</button>
+        </div>
+    </div>
+
+    <!-- MODAL ADD REVIEW -->
+    <div id="addReviewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-black text-white">Оставить отзыв</h3>
+                <button onclick="closeAddReviewModal()" class="text-slate-400 hover:text-white font-bold text-xl">✕</button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Ваша оценка (от 1 до 5 звезд):</label>
+                    <select id="reviewRatingInput" class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none">
+                        <option value="5">⭐⭐⭐⭐⭐ (5 / 5 Отлично)</option>
+                        <option value="4">⭐⭐⭐⭐ (4 / 5 Хорошо)</option>
+                        <option value="3">⭐⭐⭐ (3 / 5 Нормально)</option>
+                        <option value="2">⭐⭐ (2 / 5 Плохо)</option>
+                        <option value="1">⭐ (1 / 5 Ужасно)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Текст отзыва:</label>
+                    <textarea id="reviewTextInput" rows="3" placeholder="Напишите как прошла работа с этим специалистом..." class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
+                </div>
+            </div>
+
+            <button onclick="submitNewReview()" class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-amber-400 transition">Отправить отзыв</button>
+        </div>
+    </div>
+
+    <!-- MODAL CREATE AD -->
+    <div id="createModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-black text-white">Создать новое объявление</h3>
+                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-white font-bold text-xl">✕</button>
+            </div>
+
+            <div id="createError" class="text-red-400 text-xs hidden"></div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-400">Тип объявления / Намуди эълон:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="modalModeWorkBtn" onclick="setModalMode('work')" class="py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 transition">
+                        💼 Добавить: Найти работу
+                    </button>
+                    <button type="button" id="modalModeWorkerBtn" onclick="setModalMode('worker')" class="py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-900 border border-slate-800 text-slate-300 transition">
+                        🔍 Добавить: Найти работника
+                    </button>
+                </div>
+            </div>
+
+            <input type="text" id="newTitle" placeholder="Название (например: Сантехник срочно)" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+            <textarea id="newDesc" placeholder="Подробное описание работы..." rows="3" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
             
             <div class="grid grid-cols-2 gap-3">
-                <select id="newCat" class="border rounded-xl px-3 py-2 text-sm bg-white outline-none">
-                    <option value="Сантехника и ремонт">Сантехника и ремонт</option>
-                    <option value="IT и программирование">IT и программирование</option>
-                    <option value="Дизайн и графика">Дизайн и графика</option>
-                    <option value="Строительство">Строительство</option>
-                    <option value="Репетиторы и обучение">Репетиторы</option>
-                    <option value="Доставка и курьеры">Доставка</option>
-                    <option value="Переводы текстов">Переводы</option>
-                </select>
-
-                <select id="newType" class="border rounded-xl px-3 py-2 text-sm bg-white outline-none">
+                <select id="newType" onchange="onModalTypeChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
                     <option value="remote">Удаленно (Фосилавӣ)</option>
                     <option value="onsite">На месте (Дар маҳал)</option>
+                </select>
+
+                <select id="newCat" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
                 </select>
             </div>
 
             <div class="grid grid-cols-3 gap-2">
-                <select id="modalProv" onchange="updateModalDistricts()" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none">
-                    <option value="">Область</option>
+                <select id="modalProv" onchange="updateModalDistricts()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none">
+                    <option value="">Область / Город</option>
                     <option value="Душанбе">Душанбе</option>
+                    <option value="Худжанд">Худжанд</option>
                     <option value="Согд">Согд</option>
                     <option value="Хатлон">Хатлон</option>
                     <option value="ГБАО">ГБАО</option>
                     <option value="РРП">РРП</option>
                 </select>
-                <select id="modalDist" onchange="updateModalVillages()" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none" disabled>
-                    <option value="">Район</option>
+                <select id="modalDist" onchange="updateModalVillages()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none" disabled>
+                    <option value="">Район / Мкр</option>
                 </select>
-                <select id="modalVill" class="border rounded-xl px-2 py-2 text-xs bg-white outline-none" disabled>
-                    <option value="">Кишлак</option>
+                <select id="modalVill" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none" disabled>
+                    <option value="">Джамоат / Деҳа</option>
                 </select>
             </div>
 
-            <input type="text" id="newPrice" placeholder="Бюджет (например: 200 сомони)" class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-400">Бюджет / Цена:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="text" id="newPriceNum" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Только цифры" class="col-span-2 bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                    <select id="newCurrency" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500">
+                        <option value="сомони">сомони</option>
+                        <option value="$">$ (USD)</option>
+                        <option value="рубл">рубл</option>
+                    </select>
+                </div>
+            </div>
 
-            <button onclick="submitNewAd()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition">Опубликовать</button>
+            <div id="ageFieldContainer" class="space-y-1"></div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-400">Номер телефона для связи:</label>
+                <input type="text" id="newPhone" placeholder="+992 00 000 0000" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+            </div>
+
+            <button onclick="submitNewAd()" class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition">Опубликовать</button>
         </div>
     </div>
 
@@ -399,10 +747,359 @@
     <script>
         let currentLang = 'ru';
         let currentMode = 'work';
-        let allAds = [
-            { id: 1, title: 'Установка смесителя и ремонт труб', desc: 'Нужен опытный мастер в Душанбе для срочного ремонта.', cat: 'Сантехника и ремонт', type: 'onsite', prov: 'Душанбе', dist: 'Сино', vill: 'Гипрозем', price: '150 сомони', mode: 'work' },
-            { id: 2, title: 'Разработка сайта-визитки под ключ', desc: 'Сделаю современный сайт на HTML/JS с адаптивным дизайном.', cat: 'IT и программирование', type: 'remote', prov: 'Душанбе', dist: 'Исмоили Сомони', vill: 'Центр', price: '1200 сомони', mode: 'worker' }
+        let modalMode = 'work';
+        let activeCategoryPageName = '';
+        
+        const categoriesData = {
+            remote: [
+                "IT и программирование (сайты, боты)",
+                "Дизайн и графика (логотипы, баннеры)",
+                "Переводы текстов и копирайтинг",
+                "Монтаж видео и анимация",
+                "Удаленное обучение и репетиторство"
+            ],
+            onsite: [
+                "Сантехника и ремонт",
+                "Строительство и отделка",
+                "Электрика и проводка",
+                "Доставка и курьерские услуги",
+                "Уборка и клининг"
+            ]
+        };
+
+        let allAds = JSON.parse(localStorage.getItem('tjwork_ads')) || [
+            { id: 1, title: 'Установка смесителя и ремонт труб', desc: 'Нужен опытный мастер в Душанбе для срочного ремонта.', cat: 'Сантехника и ремонт', type: 'onsite', prov: 'Душанбе', dist: 'Сино', vill: 'Гипрозем', price: '150 сомони', ageInfo: 'Возраст: от 20 до 45 лет', phone: '+992 90 123 4567', mode: 'work', authorEmail: 'dovud0300@gmail.com' },
+            { id: 2, title: 'Разработка сайта-визитки под ключ', desc: 'Сделаю современный сайт на HTML/JS с адаптивным дизайном.', cat: 'IT и программирование (сайты, боты)', type: 'remote', prov: 'Душанбе', dist: 'Исмоили Сомони', vill: 'Центр', price: '1200 сомони', ageInfo: 'Возраст работника: 24 года', phone: '+992 93 987 6543', mode: 'worker', authorEmail: 'dovud0300@gmail.com' }
         ];
+
+        // База отзывов
+        let allReviews = JSON.parse(localStorage.getItem('tjwork_reviews')) || [
+            { id: 1, author: 'Rustam', rating: 5, text: 'Отличный специалист! Сделал всё вовремя и качественно.', date: '12.05.2025' }
+        ];
+
+        // Профили пользователей (локальный кэш расширенных данных профиля)
+        let userProfilesData = JSON.parse(localStorage.getItem('tjwork_user_profiles')) || {};
+
+        function saveAdsToStorage() {
+            localStorage.setItem('tjwork_ads', JSON.stringify(allAds));
+        }
+        function saveReviewsToStorage() {
+            localStorage.setItem('tjwork_reviews', JSON.stringify(allReviews));
+        }
+        function saveUserProfilesStorage() {
+            localStorage.setItem('tjwork_user_profiles', JSON.stringify(userProfilesData));
+        }
+
+        // 1. Динамическое изменение кнопки «Вход» на «Профиль» при успешной авторизации
+        function updateHeaderAuthButton(isAuth, user) {
+            const container = document.getElementById('headerAuthBtnContainer');
+            if (!container) return;
+
+            if (isAuth && user) {
+                const displayName = user.email || user.phoneNumber || 'Профиль';
+                container.innerHTML = `
+                    <button onclick="showPage('profile')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
+                        <span>👤 Профиль</span>
+                    </button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="openAuthModal()" id="mainAuthNavBtn" class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
+                        <span class="lang-ru">Вход</span><span class="lang-tj">Ворид шудан</span>
+                    </button>
+                `;
+            }
+        }
+
+        function onAuthSuccessful() {
+            closeAuthModal();
+            showPage('profile');
+        }
+
+        // Синхронизация данных профиля текущего пользователя
+        function syncUserProfileFromFirebase(user) {
+            if (!user) return;
+            const email = user.email || 'user@tjwork.tj';
+            if (!userProfilesData[email]) {
+                userProfilesData[email] = {
+                    email: email,
+                    dob: '02.11.2010',
+                    bio: 'Привет! Я профессиональный специалист на платформе TJWORK. Обращайтесь за качественными услугами.',
+                    phone: user.phoneNumber || '+992 90 000 0000',
+                    avatar: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                };
+                saveUserProfilesStorage();
+            }
+            renderProfileData();
+        }
+
+        function getCurrentUserEmail() {
+            const auth = window.firebaseAuth;
+            if (auth && auth.currentUser && auth.currentUser.email) {
+                return auth.currentUser.email;
+            }
+            return 'dovud0300@gmail.com'; // дефолт для тестирования
+        }
+
+        // Отображение данных на странице профиля
+        function renderProfileData() {
+            const email = getCurrentUserEmail();
+            let profile = userProfilesData[email] || {
+                email: email,
+                dob: '02.11.2010',
+                bio: 'Привет! Я профессиональный специалист на платформе TJWORK.',
+                phone: '+992 90 000 0000',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+            };
+
+            document.getElementById('profileUserEmailTitle').innerText = profile.email;
+            document.getElementById('profileDisplayDob').innerText = profile.dob;
+            document.getElementById('profileDisplayBio').innerText = profile.bio;
+            document.getElementById('profileDisplayPhone').innerText = profile.phone;
+            document.getElementById('profileAvatarImg').src = profile.avatar;
+            document.getElementById('settingsEmailInput').value = profile.email;
+            document.getElementById('settingsPhoneInput').value = profile.phone;
+
+            // Подсчет объявлений пользователя
+            let myAds = allAds.filter(ad => ad.authorEmail === email);
+            document.getElementById('statAdsCount').innerText = myAds.length;
+            document.getElementById('tabAdsCountNum').innerText = myAds.length;
+
+            // Подсчет отзывов
+            document.getElementById('statReviewsCount').innerText = allReviews.length;
+            document.getElementById('tabReviewsCountNum').innerText = allReviews.length;
+
+            renderUserAds();
+            renderUserReviews();
+        }
+
+        // Рендер объявлений конкретного пользователя
+        function renderUserAds() {
+            const container = document.getElementById('userAdsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            const email = getCurrentUserEmail();
+            let myAds = allAds.filter(ad => ad.authorEmail === email);
+
+            if (myAds.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 text-sm">У вас пока нет активных объявлений. Нажмите «+ Добавить еще», чтобы создать объявление.</div>`;
+                return;
+            }
+
+            myAds.forEach(ad => {
+                container.innerHTML += `
+                    <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-2">
+                        <div>
+                            <span class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded">${ad.cat}</span>
+                            <h4 class="font-bold text-white mt-2 text-base">${ad.title}</h4>
+                            <p class="text-xs text-slate-400 mt-1">${ad.desc}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                            <span class="text-amber-400 font-bold">${ad.price}</span>
+                            <button onclick="deleteMyAd(${ad.id})" class="text-red-400 hover:underline">Удалить</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteMyAd(id) {
+            allAds = allAds.filter(ad => ad.id !== id);
+            saveAdsToStorage();
+            renderProfileData();
+            renderAds();
+            alert('Объявление удалено!');
+        }
+
+        // Рендер отзывов
+        function renderUserReviews() {
+            const container = document.getElementById('userReviewsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (allReviews.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-slate-500 text-sm">Пока нет отзывов. Другие пользователи могут оставлять вам оценки.</div>`;
+                return;
+            }
+
+            allReviews.forEach(rev => {
+                container.innerHTML += `
+                    <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-white flex items-center gap-2">👤 ${rev.author}</span>
+                            <span class="text-amber-400 text-xs">⭐ ${rev.rating}.0 (${rev.date})</span>
+                        </div>
+                        <p class="text-xs text-slate-300">${rev.text}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Переключение вкладок профиля
+        function switchProfileTab(tabName) {
+            const btnAds = document.getElementById('tabBtnAds');
+            const btnRev = document.getElementById('tabBtnReviews');
+            const btnSet = document.getElementById('tabBtnSettings');
+
+            const tabAds = document.getElementById('profileTabAds');
+            const tabRev = document.getElementById('profileTabReviews');
+            const tabSet = document.getElementById('profileTabSettings');
+
+            btnAds.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg";
+            btnRev.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg";
+            btnSet.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg";
+
+            tabAds.classList.add('hidden');
+            tabRev.classList.add('hidden');
+            tabSet.classList.add('hidden');
+
+            if (tabName === 'ads') {
+                btnAds.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-emerald-500 text-slate-950 transition shadow-lg";
+                tabAds.classList.remove('hidden');
+            } else if (tabName === 'reviews') {
+                btnRev.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-emerald-500 text-slate-950 transition shadow-lg";
+                tabRev.classList.remove('hidden');
+            } else if (tabName === 'settings') {
+                btnSet.className = "py-3 px-4 rounded-2xl font-bold text-sm bg-emerald-500 text-slate-950 transition shadow-lg";
+                tabSet.classList.remove('hidden');
+            }
+        }
+
+        // Загрузка аватарки
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Img = e.target.result;
+                const email = getCurrentUserEmail();
+                if (!userProfilesData[email]) {
+                    userProfilesData[email] = { email };
+                }
+                userProfilesData[email].avatar = base64Img;
+                saveUserProfilesStorage();
+                renderProfileData();
+                alert('Фото профиля успешно обновлено!');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // Редактирование профиля модалка
+        function openEditProfileModal() {
+            const email = getCurrentUserEmail();
+            let profile = userProfilesData[email] || {};
+            document.getElementById('editDobInput').value = profile.dob || '02.11.2010';
+            document.getElementById('editBioInput').value = profile.bio || '';
+            document.getElementById('editPhoneInput').value = profile.phone || '';
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        function saveProfileChanges() {
+            const email = getCurrentUserEmail();
+            if (!userProfilesData[email]) userProfilesData[email] = { email };
+            userProfilesData[email].dob = document.getElementById('editDobInput').value;
+            userProfilesData[email].bio = document.getElementById('editBioInput').value;
+            userProfilesData[email].phone = document.getElementById('editPhoneInput').value;
+            saveUserProfilesStorage();
+            closeEditProfileModal();
+            renderProfileData();
+            alert('Изменения сохранены!');
+        }
+
+        // Изменение номера телефона из вкладки настроек
+        function savePhoneNumber() {
+            const newPhone = document.getElementById('settingsPhoneInput').value;
+            if (!newPhone) {
+                alert('Введите номер телефона!');
+                return;
+            }
+            const email = getCurrentUserEmail();
+            if (!userProfilesData[email]) userProfilesData[email] = { email };
+            userProfilesData[email].phone = newPhone;
+            saveUserProfilesStorage();
+            renderProfileData();
+            alert('Номер телефона успешно изменен!');
+        }
+
+        // Смена пароля через Firebase
+        async function handleChangePassword() {
+            const currentPass = document.getElementById('currentPasswordInput').value;
+            const newPass = document.getElementById('newPasswordInput').value;
+            const errBox = document.getElementById('passwordChangeError');
+            const succBox = document.getElementById('passwordChangeSuccess');
+            errBox.classList.add('hidden');
+            succBox.classList.add('hidden');
+
+            if (!currentPass || !newPass) {
+                errBox.innerText = 'Заполните оба поля для смены пароля!';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const auth = window.firebaseAuth;
+                const user = auth.currentUser;
+                if (!user) {
+                    errBox.innerText = 'Пользователь не авторизован в Firebase!';
+                    errBox.classList.remove('hidden');
+                    return;
+                }
+
+                const credential = window.EmailAuthProvider.credential(user.email, currentPass);
+                await window.reauthenticateWithCredential(user, credential);
+                await window.updatePasswordFirebase(user, newPass);
+
+                succBox.innerText = 'Пароль успешно изменен через Firebase!';
+                succBox.classList.remove('hidden');
+                document.getElementById('currentPasswordInput').value = '';
+                document.getElementById('newPasswordInput').value = '';
+            } catch (error) {
+                errBox.innerText = 'Ошибка смены пароля: ' + error.message;
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        // Отзывы модалка
+        function openAddReviewModal() {
+            document.getElementById('addReviewModal').classList.remove('hidden');
+        }
+        function closeAddReviewModal() {
+            document.getElementById('addReviewModal').classList.add('hidden');
+        }
+        function submitNewReview() {
+            const rating = document.getElementById('reviewRatingInput').value;
+            const text = document.getElementById('reviewTextInput').value;
+            if (!text) {
+                alert('Напишите текст отзыва!');
+                return;
+            }
+            const auth = window.firebaseAuth;
+            const authorName = auth && auth.currentUser && auth.currentUser.email ? auth.currentUser.email.split('@')[0] : 'Гость TJWORK';
+
+            allReviews.unshift({
+                id: Date.now(),
+                author: authorName,
+                rating: parseInt(rating),
+                text: text,
+                date: new Date().toLocaleDateString()
+            });
+
+            saveReviewsToStorage();
+            closeAddReviewModal();
+            renderProfileData();
+            alert('Спасибо! Ваш отзыв опубликован.');
+        }
+
+        // Функция для раскрытия контактов на странице помощи
+        function revealContact(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.toggle('hidden');
+            }
+        }
 
         function toggleLang() {
             const body = document.body;
@@ -420,29 +1117,167 @@
         }
 
         function showPage(pageId) {
-            ['home', 'catalog', 'useful', 'help', 'auth'].forEach(p => {
-                document.getElementById('page-' + p).classList.add('hidden');
+            ['home', 'catalog', 'page-category-detail', 'useful', 'help', 'profile'].forEach(p => {
+                const el = document.getElementById('page-' + p);
+                if (el) el.classList.add('hidden');
             });
-            document.getElementById('page-' + pageId).classList.remove('hidden');
+            const target = document.getElementById('page-' + pageId);
+            if (target) target.classList.remove('hidden');
+
+            const heroControls = document.getElementById('homeHeroControls');
+            const filtersBlock = document.getElementById('homeFiltersBlock');
+            if (pageId === 'home') {
+                if (heroControls) heroControls.classList.remove('hidden');
+                if (filtersBlock) filtersBlock.classList.remove('hidden');
+            } else {
+                if (heroControls) heroControls.classList.add('hidden');
+                if (filtersBlock) filtersBlock.classList.add('hidden');
+            }
+
+            if (pageId === 'profile') {
+                renderProfileData();
+            }
+
             window.scrollTo(0, 0);
+        }
+
+        function openCategoryPage(categoryName) {
+            activeCategoryPageName = categoryName;
+            document.getElementById('catDetailTitle').innerText = categoryName;
+            showPage('page-category-detail');
+            renderCategoryDetailAds();
+        }
+
+        function renderCategoryDetailAds() {
+            const container = document.getElementById('catDetailAdsList');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let matched = allAds.filter(ad => ad.cat.toLowerCase().includes(activeCategoryPageName.toLowerCase()) || activeCategoryPageName.toLowerCase().includes(ad.cat.toLowerCase()));
+
+            if (matched.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500">В этой категории пока нет объявлений. Нажмите «Добавить объявление сюда», чтобы разместить первое!</div>`;
+                return;
+            }
+
+            matched.forEach(ad => {
+                container.innerHTML += `
+                    <div class="bg-[#111827] p-5 rounded-2xl shadow-lg border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
+                        <div>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">${ad.cat}</span>
+                            <h4 class="font-bold text-lg mt-3 text-white">${ad.title}</h4>
+                            <p class="text-sm text-slate-400 mt-1">${ad.desc}</p>
+                        </div>
+                        <div class="space-y-1 text-xs text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                            <div>👤 <b>${ad.ageInfo || ''}</b></div>
+                            <div>📞 Контакт: <a href="tel:${ad.phone}" class="text-emerald-400 font-bold hover:underline">${ad.phone || 'Не указан'}</a></div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-amber-400 font-extrabold text-base">${ad.price}</span>
+                            <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         function toggleBurger() {
             document.getElementById('burgerMenu').classList.toggle('hidden');
         }
 
+        function updateBannerContent(mode) {
+            const badge = document.getElementById('bannerBadge');
+            const title = document.getElementById('bannerTitle');
+            const desc = document.getElementById('bannerDesc');
+
+            if (mode === 'work') {
+                badge.innerHTML = `<span class="lang-ru">Поиск работы во фрилансе</span><span class="lang-tj">Ҷустуҷӯи кор дар фриланс</span>`;
+                title.innerHTML = `<span class="lang-ru">Найди работу или закажи услуги в Тоҷикистон</span><span class="lang-tj">Кор пайдо кунед ё хизматрасони фармоиш диҳед</span>`;
+                desc.innerHTML = `<span class="lang-ru">Выполняйте задания и получайте оплату.</span><span class="lang-tj">Вазифаҳоро иҷро кунед ва музд гиред.</span>`;
+            } else {
+                badge.innerHTML = `<span class="lang-ru">Поиск квалифицированных специалистов</span><span class="lang-tj">Ҷустуҷӯи мутахассисони соҳибихтисос</span>`;
+                title.innerHTML = `<span class="lang-ru">Найди идеального работника или начни зарабатывать</span><span class="lang-tj">Коргари беҳтаринро пайдо кунед ё бо истеъдоди худ маблағ ба даст оред</span>`;
+                desc.innerHTML = `<span class="lang-ru">Тысячи профессионалов готовы выполнить заказ.</span><span class="lang-tj">Ҳазорон мутахассисон омодаанд фармоиши шуморо иҷро кунанд.</span>`;
+            }
+        }
+
         function setMode(mode) {
             currentMode = mode;
             const workBtn = document.getElementById('modeWorkBtn');
             const workerBtn = document.getElementById('modeWorkerBtn');
-            if (mode === 'work') {
-                workBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition";
-                workerBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition";
-            } else {
-                workerBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm bg-white text-emerald-600 shadow-sm transition";
-                workBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-sm text-slate-600 transition";
+            if (workBtn && workerBtn) {
+                if (mode === 'work') {
+                    workBtn.className = "flex-1 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950 shadow-md transition";
+                    workerBtn.className = "flex-1 py-3.5 px-4 rounded-xl font-bold text-sm text-slate-300 hover:text-white transition";
+                } else {
+                    workerBtn.className = "flex-1 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950 shadow-md transition";
+                    workBtn.className = "flex-1 py-3.5 px-4 rounded-xl font-bold text-sm text-slate-300 hover:text-white transition";
+                }
             }
+            updateBannerContent(mode);
             renderAds();
+        }
+
+        function setModalMode(mode) {
+            modalMode = mode;
+            const mWork = document.getElementById('modalModeWorkBtn');
+            const mWorker = document.getElementById('modalModeWorkerBtn');
+            if (mode === 'work') {
+                mWork.className = "py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 transition";
+                mWorker.className = "py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-900 border border-slate-800 text-slate-300 transition";
+            } else {
+                mWorker.className = "py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 transition";
+                mWork.className = "py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-900 border border-slate-800 text-slate-300 transition";
+            }
+            renderAgeFields();
+        }
+
+        function renderAgeFields() {
+            const container = document.getElementById('ageFieldContainer');
+            if (modalMode === 'work') {
+                container.innerHTML = `
+                    <label class="text-xs font-bold text-slate-400">Требуемый возраст работника (от и до):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="ageFrom" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="От (лет)" class="bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500">
+                        <input type="text" id="ageTo" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="До (лет)" class="bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500">
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <label class="text-xs font-bold text-slate-400">Ваш возраст:</label>
+                    <input type="text" id="workerAge" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Например: 25" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500">
+                `;
+            }
+        }
+
+        function onTypeChange() {
+            const typeVal = document.getElementById('typeSelect').value;
+            const catSelect = document.getElementById('catSelect');
+            catSelect.innerHTML = '<option value="">📂 Все категории / Ҳама категорияҳо</option>';
+            
+            let listToUse = [];
+            if (typeVal === 'remote') {
+                listToUse = categoriesData.remote;
+            } else if (typeVal === 'onsite') {
+                listToUse = categoriesData.onsite;
+            } else {
+                listToUse = [...categoriesData.remote, ...categoriesData.onsite];
+            }
+
+            listToUse.forEach(cat => {
+                catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            applyFilters();
+        }
+
+        function onModalTypeChange() {
+            const typeVal = document.getElementById('newType').value;
+            const newCat = document.getElementById('newCat');
+            newCat.innerHTML = '';
+            categoriesData[typeVal].forEach(cat => {
+                newCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
         }
 
         const regionsData = {
@@ -454,9 +1289,17 @@
                     'Сино': ['Гипрозем', '82-й микрорайон', 'Зеленова', 'Медколледж']
                 }
             },
+            'Худжанд': {
+                districts: {
+                    'Микрорайоны': ['Мкр 31', 'Мкр 32', 'Мкр 33', 'Мкр 34'],
+                    'Центр': ['Панчшанбе', 'Меваи Гул', 'Дарёбод'],
+                    'Чкаловск (Гулистон)': ['Центр Чкаловска', 'Заводской посёлок'],
+                    'Сырдарьинский': ['Чашмаи Маҳзар', 'Боғи Камол']
+                }
+            },
             'Согд': {
                 districts: {
-                    'Худжанд': ['Чашмаи Маҳзар', 'Панчшанбе', 'Меваи Гул', 'Дарёбод'],
+                    'Ашт': ['Понгоз', 'Шайдан', 'Ашткент', 'Ошўб'],
                     'Б. Гафуров': ['Истиклол', 'Хайдар Усмонов', 'Гулхона', 'Унджи'],
                     'Канибадам': ['Побкор', 'Лоиқ Шерали', 'Хладокомбинат', 'Конибодом деҳ'],
                     'Исфара': ['Чоркӯҳ', 'Ворух', 'Шӯроб', 'Лаккон'],
@@ -491,8 +1334,8 @@
             const prov = document.getElementById('regionProv').value;
             const dist = document.getElementById('regionDist');
             const vill = document.getElementById('regionVill');
-            dist.innerHTML = '<option value="">🏙 Район / Город</option>';
-            vill.innerHTML = '<option value="">🏡 Кишлак / Джамоат</option>';
+            dist.innerHTML = '<option value="">🏘 Район / Микрорайон</option>';
+            vill.innerHTML = '<option value="">🏡 Джамоат / Деҳа / Кишлак</option>';
             dist.disabled = true;
             vill.disabled = true;
 
@@ -508,7 +1351,7 @@
             const prov = document.getElementById('regionProv').value;
             const dVal = document.getElementById('regionDist').value;
             const vill = document.getElementById('regionVill');
-            vill.innerHTML = '<option value="">🏡 Кишлак / Джамоат</option>';
+            vill.innerHTML = '<option value="">🏡 Джамоат / Деҳа / Кишлак</option>';
             vill.disabled = true;
 
             if (prov && dVal && regionsData[prov].districts[dVal]) {
@@ -523,8 +1366,8 @@
             const prov = document.getElementById('modalProv').value;
             const dist = document.getElementById('modalDist');
             const vill = document.getElementById('modalVill');
-            dist.innerHTML = '<option value="">Район</option>';
-            vill.innerHTML = '<option value="">Кишлак</option>';
+            dist.innerHTML = '<option value="">Район / Мкр</option>';
+            vill.innerHTML = '<option value="">Джамоат</option>';
             dist.disabled = true;
             vill.disabled = true;
             if (prov && regionsData[prov]) {
@@ -539,7 +1382,7 @@
             const prov = document.getElementById('modalProv').value;
             const dVal = document.getElementById('modalDist').value;
             const vill = document.getElementById('modalVill');
-            vill.innerHTML = '<option value="">Кишлак</option>';
+            vill.innerHTML = '<option value="">Джамоат</option>';
             vill.disabled = true;
             if (prov && dVal && regionsData[prov].districts[dVal]) {
                 vill.disabled = false;
@@ -551,26 +1394,31 @@
 
         function renderAds(filtered = null) {
             const container = document.getElementById('adsList');
+            if (!container) return;
             container.innerHTML = '';
             let list = filtered || allAds;
             list = list.filter(ad => ad.mode === currentMode);
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">Объявлений пока нет. Будьте первыми!</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500">Объявлений пока нет. Будьте первыми!</div>`;
                 return;
             }
 
             list.forEach(ad => {
                 container.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="bg-[#111827] p-5 rounded-2xl shadow-lg border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
                         <div>
-                            <span class="bg-emerald-50 text-emerald-600 text-xs font-bold px-2.5 py-1 rounded-lg">${ad.cat}</span>
-                            <h3 class="font-bold text-lg mt-2 text-slate-900">${ad.title}</h3>
-                            <p class="text-sm text-slate-600 mt-1">${ad.desc}</p>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">${ad.cat}</span>
+                            <h4 class="font-bold text-lg mt-3 text-white">${ad.title}</h4>
+                            <p class="text-sm text-slate-400 mt-1">${ad.desc}</p>
                         </div>
-                        <div class="mt-4 pt-4 border-t flex items-center justify-between">
-                            <span class="text-amber-600 font-extrabold">${ad.price}</span>
-                            <span class="text-xs text-slate-400">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : ''}</span>
+                        <div class="space-y-1 text-xs text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                            <div>👤 <b>${ad.ageInfo || ''}</b></div>
+                            <div>📞 Контакт: <a href="tel:${ad.phone}" class="text-emerald-400 font-bold hover:underline">${ad.phone || 'Не указан'}</a></div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-amber-400 font-extrabold text-base">${ad.price}</span>
+                            <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>
                         </div>
                     </div>
                 `;
@@ -579,61 +1427,91 @@
 
         function applyFilters() {
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const cat = document.getElementById('catSelect').value;
             const type = document.getElementById('typeSelect').value;
+            const cat = document.getElementById('catSelect').value;
             const prov = document.getElementById('regionProv').value;
             const dist = document.getElementById('regionDist').value;
+            const vill = document.getElementById('regionVill').value;
 
             let result = allAds.filter(ad => {
-                let matchSearch = ad.title.toLowerCase().includes(search) || ad.desc.toLowerCase().includes(search);
-                let matchCat = cat === '' || ad.cat === cat;
+                let matchSearch = search === '' || ad.title.toLowerCase().includes(search) || ad.desc.toLowerCase().includes(search);
                 let matchType = type === '' || ad.type === type;
+                let matchCat = cat === '' || ad.cat === cat;
                 let matchProv = prov === '' || ad.prov === prov;
                 let matchDist = dist === '' || ad.dist === dist;
-                return matchSearch && matchCat && matchType && matchProv && matchDist;
+                let matchVill = vill === '' || ad.vill === vill;
+                return matchSearch && matchType && matchCat && matchProv && matchDist && matchVill;
             });
 
             renderAds(result);
         }
 
-        function filterByCategory(categoryName) {
-            document.getElementById('catSelect').value = categoryName;
-            showPage('home');
-            applyFilters();
-        }
-
         function openCreateModal() {
             document.getElementById('createModal').classList.remove('hidden');
+            onModalTypeChange();
+            setModalMode('work');
         }
         function closeCreateModal() {
             document.getElementById('createModal').classList.add('hidden');
         }
 
+        function openAuthModal() {
+            document.getElementById('authModal').classList.remove('hidden');
+            checkAuthAndOpenProfile();
+        }
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
         function submitNewAd() {
             const title = document.getElementById('newTitle').value;
             const desc = document.getElementById('newDesc').value;
-            const cat = document.getElementById('newCat').value;
             const type = document.getElementById('newType').value;
+            const cat = document.getElementById('newCat').value;
             const prov = document.getElementById('modalProv').value;
             const dist = document.getElementById('modalDist').value;
             const vill = document.getElementById('modalVill').value;
-            const price = document.getElementById('newPrice').value;
+            
+            const priceNum = document.getElementById('newPriceNum').value;
+            const currency = document.getElementById('newCurrency').value;
+            const phone = document.getElementById('newPhone').value;
             const err = document.getElementById('createError');
 
-            if (!title || !desc || !price) {
-                err.innerText = 'Заполните обязательные поля!';
-                err.classList.remove('hidden');
-                return;
+            let ageInfo = '';
+            if (modalMode === 'work') {
+                const ageFrom = document.getElementById('ageFrom').value;
+                const ageTo = document.getElementById('ageTo').value;
+                if (!title || !desc || !priceNum || !phone || !ageFrom || !ageTo) {
+                    err.innerText = 'Заполните все обязательные поля (цена, возраст от и до, телефон)!';
+                    err.classList.remove('hidden');
+                    return;
+                }
+                ageInfo = `Возраст: от ${ageFrom} до ${ageTo} лет`;
+            } else {
+                const workerAge = document.getElementById('workerAge').value;
+                if (!title || !desc || !priceNum || !phone || !workerAge) {
+                    err.innerText = 'Заполните все обязательные поля (цена, ваш возраст, телефон)!';
+                    err.classList.remove('hidden');
+                    return;
+                }
+                ageInfo = `Возраст работника: ${workerAge} лет`;
             }
+
+            const price = `${priceNum} ${currency}`;
 
             allAds.unshift({
                 id: Date.now(),
-                title, desc, cat, type, prov, dist, vill, price, mode: currentMode
+                title, desc, cat, type, prov, dist, vill, price, ageInfo, phone, mode: modalMode,
+                authorEmail: getCurrentUserEmail()
             });
 
+            saveAdsToStorage();
             closeCreateModal();
             renderAds();
-            alert('Объявление успешно опубликовано!');
+            if (activeCategoryPageName) {
+                renderCategoryDetailAds();
+            }
+            alert('Объявление успешно опубликовано и добавлено в каталог!');
         }
 
         let isSignUpMode = false;
@@ -654,10 +1532,8 @@
         }
 
         function checkAuthAndOpenProfile() {
-            showPage('auth');
             const auth = window.firebaseAuth;
             if (!auth) return;
-            
             const user = auth.currentUser;
             if (user) {
                 document.getElementById('loggedOutView').classList.add('hidden');
@@ -686,10 +1562,10 @@
                 if (isSignUpMode) {
                     await window.fbSignUp(auth, email, password);
                     alert('Регистрация успешна!');
-                    checkAuthAndOpenProfile();
+                    onAuthSuccessful();
                 } else {
                     await window.fbSignIn(auth, email, password);
-                    checkAuthAndOpenProfile();
+                    onAuthSuccessful();
                 }
             } catch (error) {
                 errBox.innerText = 'Ошибка: ' + error.message;
@@ -699,10 +1575,15 @@
 
         async function handleLogout() {
             const auth = window.firebaseAuth;
-            await window.fbSignOut(auth);
-            checkAuthAndOpenProfile();
+            if (auth) {
+                await window.fbSignOut(auth);
+            }
+            showPage('home');
+            alert('Вы вышли из аккаунта.');
         }
 
+        updateBannerContent('work');
+        onTypeChange();
         renderAds();
     </script>
 </body>
