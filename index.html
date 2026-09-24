@@ -91,8 +91,43 @@
         body.lang-tj-active .lang-tj { display: inline; }
         body.lang-tj-active blockquote.lang-tj, body.lang-tj-active div.lang-tj, body.lang-tj-active p.lang-tj, body.lang-tj-active span.lang-tj { display: block; }
     </style>
+
+<style id="burger-animation">
+#burgerMenu {
+    width: 50vw;
+    max-width: 50vw;
+    max-height: 0;
+    margin-left: auto;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(24px) scale(.98);
+    transform-origin: right bottom;
+    transition: max-height .45s cubic-bezier(.22,1,.36,1),
+                opacity .25s ease,
+                transform .45s cubic-bezier(.22,1,.36,1);
+}
+#burgerMenu.burger-open {
+    max-height: 70vh;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+#burgerMenu .burger-item {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .25s ease, transform .35s cubic-bezier(.22,1,.36,1);
+}
+#burgerMenu.burger-open .burger-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+#burgerMenu.burger-open .burger-item:nth-child(1) { transition-delay: .05s; }
+#burgerMenu.burger-open .burger-item:nth-child(2) { transition-delay: .10s; }
+#burgerMenu.burger-open .burger-item:nth-child(3) { transition-delay: .15s; }
+#burgerMenu.burger-open .burger-item:nth-child(4) { transition-delay: .20s; }
+</style>
+
 </head>
-<body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active">
+<body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active overflow-x-hidden">
 
     <!-- HEADER -->
     <header class="bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
@@ -130,11 +165,11 @@
             </div>
         </div>
 
-        <div id="burgerMenu" class="hidden lg:hidden bg-[#111827] border-t border-slate-800 px-4 py-4 space-y-3">
-            <a href="#" onclick="showPage('home'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
-            <a href="#" onclick="showPage('catalog'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
-            <a href="#" onclick="showPage('useful'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
-            <a href="#" onclick="showPage('help'); toggleBurger();" class="block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+        <div id="burgerMenu" class="lg:hidden bg-[#111827] border-t border-slate-800 px-4 py-4 space-y-3">
+            <a href="#" onclick="showPage('home'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+            <a href="#" onclick="showPage('catalog'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+            <a href="#" onclick="showPage('useful'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+            <a href="#" onclick="showPage('help'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
         </div>
     </header>
 
@@ -378,16 +413,6 @@
         <div id="page-profile" class="hidden space-y-6 max-w-4xl mx-auto">
             <div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
-                    <div class="relative group">
-                        <div class="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 shadow-xl">
-                            <img id="profileAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Avatar" class="w-full h-full object-cover rounded-full bg-slate-900">
-                        </div>
-                        <label for="avatarFileInput" class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold cursor-pointer transition">
-                            Сменить фото
-                        </label>
-                        <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
-                    </div>
-
                     <div class="flex-1 space-y-4 text-center md:text-left w-full">
                         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div>
@@ -413,7 +438,6 @@
 
                         <div class="space-y-1.5 text-xs md:text-sm text-slate-300">
                             <div>🎂 <b>День рождения:</b> <span id="profileDisplayDob" class="text-slate-400">02.11.2010</span></div>
-                            <div>📝 <b>О себе (био):</b> <span id="profileDisplayBio" class="text-slate-400">Привет! Я профессиональный специалист на платформе TJWORK. Обращайтесь за качественными услугами.</span></div>
                             <div>📞 <b>Номер телефона:</b> <span id="profileDisplayPhone" class="text-emerald-400 font-bold">+992 00 000 0000</span></div>
                         </div>
                     </div>
@@ -898,10 +922,8 @@
                 userProfilesData[email] = {
                     email: email,
                     dob: '02.11.2010',
-                    bio: 'Привет! Я профессиональный специалист на платформе TJWORK. Обращайтесь за качественными услугами.',
                     phone: user.phoneNumber || '+992 90 000 0000',
-                    avatar: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
-                };
+                    };
                 saveUserProfilesStorage();
             }
             renderProfileData();
@@ -920,16 +942,12 @@
             let profile = userProfilesData[email] || {
                 email: email,
                 dob: '02.11.2010',
-                bio: 'Привет! Я профессиональный специалист на платформе TJWORK.',
                 phone: '+992 90 000 0000',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
             };
 
             document.getElementById('profileUserEmailTitle').innerText = profile.email;
             document.getElementById('profileDisplayDob').innerText = profile.dob;
-            document.getElementById('profileDisplayBio').innerText = profile.bio;
             document.getElementById('profileDisplayPhone').innerText = profile.phone;
-            document.getElementById('profileAvatarImg').src = profile.avatar;
             document.getElementById('settingsEmailInput').value = profile.email;
             document.getElementById('settingsPhoneInput').value = profile.phone;
 
@@ -1244,7 +1262,9 @@
         }
 
         function toggleBurger() {
-            document.getElementById('burgerMenu').classList.toggle('hidden');
+            const menu = document.getElementById('burgerMenu');
+            if (!menu) return;
+            menu.classList.toggle('burger-open');
         }
 
         function updateBannerContent(mode) {
