@@ -173,8 +173,8 @@
         </div>
     </header>
 
-    <!-- БАННЕР -->
-    <section class="relative w-full h-[520px] md:h-[600px] flex items-center justify-center overflow-hidden">
+<!-- БАННЕР -->
+    <section id="homeHeroBanner" class="relative w-full h-[520px] md:h-[600px] flex items-center justify-center overflow-hidden">
         <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80" alt="Freelance Tajikistan" class="absolute inset-0 w-full h-full object-cover opacity-30">
         <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/60 to-transparent"></div>
 
@@ -214,7 +214,7 @@
         </div>
     </section>
 
-    <!-- MAIN CONTENT -->
+        <!-- MAIN CONTENT -->
     <main id="mainContent" class="max-w-7xl mx-auto px-4 py-8">
 
         <!-- 1. HOME PAGE -->
@@ -413,6 +413,15 @@
         <div id="page-profile" class="hidden space-y-6 max-w-4xl mx-auto">
             <div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
+                    <div class="relative group shrink-0">
+                        <div class="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 shadow-xl">
+                            <img id="profileAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Аватар" class="w-full h-full object-cover rounded-full bg-slate-900">
+                        </div>
+                        <label for="avatarFileInput" class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold cursor-pointer transition">
+                            Сменить фото
+                        </label>
+                        <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                    </div>
                     <div class="flex-1 space-y-4 text-center md:text-left w-full">
                         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div>
@@ -439,6 +448,7 @@
                         <div class="space-y-1.5 text-xs md:text-sm text-slate-300">
                             <div>🎂 <b>День рождения:</b> <span id="profileDisplayDob" class="text-slate-400">02.11.2010</span></div>
                             <div>📞 <b>Номер телефона:</b> <span id="profileDisplayPhone" class="text-emerald-400 font-bold">+992 00 000 0000</span></div>
+                            <div>📝 <b>Биография:</b> <span id="profileDisplayBio" class="text-slate-400">Пока ничего не указано.</span></div>
                         </div>
                     </div>
                 </div>
@@ -923,6 +933,8 @@
                     email: email,
                     dob: '02.11.2010',
                     phone: user.phoneNumber || '+992 90 000 0000',
+                    bio: '',
+                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
                     };
                 saveUserProfilesStorage();
             }
@@ -943,11 +955,17 @@
                 email: email,
                 dob: '02.11.2010',
                 phone: '+992 90 000 0000',
+                bio: '',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
             };
 
             document.getElementById('profileUserEmailTitle').innerText = profile.email;
             document.getElementById('profileDisplayDob').innerText = profile.dob;
             document.getElementById('profileDisplayPhone').innerText = profile.phone;
+            const bioEl = document.getElementById('profileDisplayBio');
+            if (bioEl) bioEl.innerText = profile.bio || 'Пока ничего не указано.';
+            const avatarEl = document.getElementById('profileAvatarImg');
+            if (avatarEl) avatarEl.src = profile.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
             document.getElementById('settingsEmailInput').value = profile.email;
             document.getElementById('settingsPhoneInput').value = profile.phone;
 
@@ -1204,8 +1222,13 @@
             const target = document.getElementById('page-' + pageId);
             if (target) target.classList.remove('hidden');
 
+            const heroBanner = document.getElementById('homeHeroBanner');
             const heroControls = document.getElementById('homeHeroControls');
             const filtersBlock = document.getElementById('homeFiltersBlock');
+            if (heroBanner) {
+                if (pageId === 'profile') heroBanner.classList.add('hidden');
+                else heroBanner.classList.remove('hidden');
+            }
             if (pageId === 'home') {
                 if (heroControls) heroControls.classList.remove('hidden');
                 if (filtersBlock) filtersBlock.classList.remove('hidden');
