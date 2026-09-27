@@ -26,6 +26,10 @@
             RecaptchaVerifier,
             signInWithPhoneNumber
         } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import {
+            getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc,
+            onSnapshot, query, where, orderBy, limit, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyABIlZDxpHBUtSbYYaf_wMIDxNtbM2i2Po",
@@ -39,6 +43,22 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseDb = db;
+        window.fbCollection = collection;
+        window.fbDoc = doc;
+        window.fbSetDoc = setDoc;
+        window.fbGetDoc = getDoc;
+        window.fbGetDocs = getDocs;
+        window.fbUpdateDoc = updateDoc;
+        window.fbDeleteDoc = deleteDoc;
+        window.fbOnSnapshot = onSnapshot;
+        window.fbQuery = query;
+        window.fbWhere = where;
+        window.fbOrderBy = orderBy;
+        window.fbLimit = limit;
+        window.fbServerTimestamp = serverTimestamp;
 
         const googleProvider = new GoogleAuthProvider();
         const facebookProvider = new FacebookAuthProvider();
@@ -72,11 +92,11 @@
         };
 
         // Слушатель состояния авторизации Firebase
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 window.currentUser = user;
                 updateHeaderAuthButton(true, user);
-                syncUserProfileFromFirebase(user);
+                await initializeUserAccount(user);
             } else {
                 window.currentUser = null;
                 updateHeaderAuthButton(false, null);
@@ -93,37 +113,54 @@
     </style>
 
 <style id="burger-animation">
+/* Бургер-меню открывается поверх баннера, не меняя высоту страницы. */
 #burgerMenu {
-    width: 50vw;
-    max-width: 50vw;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: min(50vw, 380px);
+    max-width: calc(100vw - 1rem);
     max-height: 0;
-    margin-left: auto;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     overflow: hidden;
-    transform: translateY(24px) scale(.98);
-    transform-origin: right bottom;
-    transition: max-height .45s cubic-bezier(.22,1,.36,1),
-                opacity .25s ease,
-                transform .45s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 18px 40px rgba(0,0,0,.28);
+    transition: max-height .32s cubic-bezier(.22,1,.36,1),
+                padding .28s ease,
+                opacity .18s ease,
+                visibility 0s linear .32s;
 }
 #burgerMenu.burger-open {
     max-height: 70vh;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
     opacity: 1;
-    transform: translateY(0) scale(1);
+    visibility: visible;
+    pointer-events: auto;
+    transition: max-height .34s cubic-bezier(.22,1,.36,1),
+                padding .28s ease,
+                opacity .2s ease,
+                visibility 0s linear 0s;
 }
 #burgerMenu .burger-item {
     opacity: 0;
-    transform: translateY(14px);
-    transition: opacity .25s ease, transform .35s cubic-bezier(.22,1,.36,1);
+    transform: translateY(4px);
+    transition: opacity .18s ease, transform .24s cubic-bezier(.22,1,.36,1);
 }
 #burgerMenu.burger-open .burger-item {
     opacity: 1;
     transform: translateY(0);
 }
-#burgerMenu.burger-open .burger-item:nth-child(1) { transition-delay: .05s; }
-#burgerMenu.burger-open .burger-item:nth-child(2) { transition-delay: .10s; }
-#burgerMenu.burger-open .burger-item:nth-child(3) { transition-delay: .15s; }
-#burgerMenu.burger-open .burger-item:nth-child(4) { transition-delay: .20s; }
+#burgerMenu.burger-open .burger-item:nth-child(1) { transition-delay: .02s; }
+#burgerMenu.burger-open .burger-item:nth-child(2) { transition-delay: .04s; }
+#burgerMenu.burger-open .burger-item:nth-child(3) { transition-delay: .06s; }
+#burgerMenu.burger-open .burger-item:nth-child(4) { transition-delay: .08s; }
+#burgerMenu.burger-open .burger-item:nth-child(5) { transition-delay: .10s; }
+#burgerMenu.burger-open .burger-item:nth-child(6) { transition-delay: .12s; }
 </style>
 
 </head>
@@ -170,6 +207,8 @@
             <a href="#" onclick="showPage('catalog'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
             <a href="#" onclick="showPage('useful'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
             <a href="#" onclick="showPage('help'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+            <a id="burgerChatLink" href="#" onclick="showPage('messages'); toggleBurger();" class="burger-item hidden font-medium py-1 text-slate-300"><span class="lang-ru">💬 Чат</span><span class="lang-tj">💬 Чат</span></a>
+            <a id="burgerAdminLink" href="#" onclick="showPage('admin'); toggleBurger();" class="burger-item font-medium py-1 text-amber-400"><span class="lang-ru">🛡 Админ</span><span class="lang-tj">🛡 Админ</span></a>
         </div>
     </header>
 
@@ -385,6 +424,28 @@
                     </div>
 
                     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <button onclick="revealContact('igContact')" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                            <span class="flex items-center gap-2">Instagram</span>
+                            <span class="text-xs bg-pink-950 px-2 py-1 rounded text-pink-200">@_mavlonov.10</span>
+                        </button>
+                        <div id="igContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300">@_mavlonov.10</span>
+                            <a href="https://instagram.com/_mavlonov.10" target="_blank" rel="noopener noreferrer" class="bg-pink-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-pink-400">Открыть</a>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <button onclick="revealContact('fbContact')" class="w-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
+                            <span class="flex items-center gap-2">Facebook</span>
+                            <span class="text-xs bg-blue-950 px-2 py-1 rounded text-blue-200">Профиль администратора</span>
+                        </button>
+                        <div id="fbContact" class="hidden p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300">ID: 100086152061971</span>
+                            <a href="https://www.facebook.com/profile.php?id=100086152061971" target="_blank" rel="noopener noreferrer" class="bg-[#1877F2] text-white px-3 py-1 rounded-lg font-bold hover:bg-[#166fe5]">Открыть</a>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                         <button onclick="revealContact('tgContact')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-4 flex items-center justify-between transition shadow-md">
                             <span class="flex items-center gap-2">Telegram</span>
                             <span class="text-xs bg-sky-950 px-2 py-1 rounded text-sky-300">Нажмите чтобы показать</span>
@@ -426,6 +487,7 @@
                         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div>
                                 <h2 id="profileUserEmailTitle" class="text-xl md:text-2xl font-black text-white">user@tjwork.tj</h2>
+                                <div id="profileNicknameTitle" class="text-emerald-400 font-bold text-sm mt-1">@nickname</div>
                                 <p class="text-xs text-emerald-400 font-semibold mt-0.5">✓ Верифицированный фрилансер TJWORK</p>
                             </div>
                             
@@ -515,6 +577,90 @@
             </div>
         </div>
 
+        <!-- 7. СТРАНИЦА СООБЩЕНИЙ -->
+        <div id="page-messages" class="hidden max-w-6xl mx-auto">
+            <div class="bg-[#111827] border border-slate-800 rounded-3xl overflow-hidden shadow-xl min-h-[620px] grid grid-cols-1 md:grid-cols-[300px_1fr]">
+                <aside class="border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
+                    <div class="p-5 border-b border-slate-800">
+                        <h2 class="text-xl font-black text-white">💬 Сообщения</h2>
+                        <p class="text-xs text-slate-500 mt-1">Общайтесь с исполнителями и заказчиками прямо на TJWORK.</p>
+                    </div>
+                    <div id="chatContactsList" class="p-2 space-y-1 max-h-[540px] overflow-y-auto">
+                        <div class="text-center text-slate-500 text-sm py-8">Загрузка диалогов...</div>
+                    </div>
+                </aside>
+                <section class="flex flex-col min-h-[620px]">
+                    <div id="chatHeader" class="p-5 border-b border-slate-800">
+                        <div class="font-bold text-white">Выберите диалог</div>
+                        <div class="text-xs text-slate-500 mt-1">Здесь появятся ваши сообщения.</div>
+                    </div>
+                    <div id="chatMessages" class="flex-1 p-5 space-y-3 overflow-y-auto bg-[#0b0f19]">
+                        <div class="h-full min-h-[400px] flex items-center justify-center text-slate-600 text-sm">Нет выбранного диалога</div>
+                    </div>
+                    <div class="p-4 border-t border-slate-800 flex gap-2">
+                        <input id="chatMessageInput" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Напишите сообщение..." class="flex-1 bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <button onclick="sendChatMessage()" class="bg-emerald-500 text-slate-950 font-bold px-5 rounded-xl hover:bg-emerald-400 transition">Отправить</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- 8. СТРАНИЦА АДМИНИСТРАТОРА -->
+        <div id="page-admin" class="hidden max-w-6xl mx-auto space-y-6">
+            <div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <img id="adminProfileAvatar" class="w-24 h-24 rounded-full object-cover border-4 border-emerald-500/30" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Администратор">
+                    <div class="flex-1 text-center md:text-left">
+                        <div id="adminPublicBadge" class="inline-flex px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold mb-2">🛡 Администратор TJWORK</div>
+                        <h2 id="adminProfileName" class="text-2xl md:text-3xl font-black text-white">Администратор</h2>
+                        <p id="adminProfileBio" class="text-slate-400 text-sm mt-2">Здесь находится профиль администратора TJWORK.</p>
+                    </div>
+                    <button id="adminContactBtn" onclick="startAdminChat()" class="hidden bg-slate-800 border border-slate-700 text-white font-bold px-5 py-3 rounded-xl hover:bg-slate-700 transition">💬 Написать админу</button>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-slate-800">
+                    <div class="mb-4">
+                        <h3 class="font-black text-white text-lg">📞 Связь с администратором</h3>
+                        <p class="text-xs text-slate-500 mt-1">Выберите удобный способ связи.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <a href="tel:+992112504410" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-3 rounded-xl text-center transition">☎️ +992 11 250 4410</a>
+                        <a href="https://wa.me/992112504410" target="_blank" rel="noopener noreferrer" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-4 py-3 rounded-xl text-center transition">💬 WhatsApp</a>
+                        <a href="https://instagram.com/_mavlonov.10" target="_blank" rel="noopener noreferrer" class="bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-3 rounded-xl text-center transition">📷 Instagram @_mavlonov.10</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminControls" class="hidden space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Пользователей</div><div id="adminUsersCount" class="text-3xl font-black text-white mt-1">0</div></div>
+                    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Объявлений</div><div id="adminAdsCount" class="text-3xl font-black text-white mt-1">0</div></div>
+                    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Сейчас онлайн</div><div id="adminOnlineCount" class="text-3xl font-black text-emerald-400 mt-1">0</div></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div><h3 class="font-black text-white text-lg">🚫 Заблокировать пользователя</h3><p class="text-xs text-slate-500 mt-1">Можно указать email и срок блокировки.</p></div>
+                        <input id="adminBanEmail" type="email" placeholder="Email пользователя" class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500">
+                        <select id="adminBanDuration" class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none">
+                            <option value="permanent">Навсегда</option><option value="3600000">1 час</option><option value="86400000">1 день</option><option value="604800000">7 дней</option><option value="2592000000">30 дней</option>
+                        </select>
+                        <button onclick="adminBanByEmail()" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-400 transition">Заблокировать</button>
+                    </div>
+
+                    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+                        <h3 class="font-black text-white text-lg mb-3">👥 Пользователи</h3>
+                        <div id="adminUsersList" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+                    <div class="flex items-center justify-between gap-3 mb-4"><div><h3 class="font-black text-white text-lg">📦 Все объявления</h3><p class="text-xs text-slate-500">Удаление здесь удаляет объявление для всех пользователей.</p></div></div>
+                    <div id="adminAdsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- MODAL AUTH -->
@@ -593,6 +739,11 @@
             </div>
 
             <div class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400">Никнейм:</label>
+                    <input type="text" id="editNicknameInput" maxlength="30" placeholder="Например: DovudDev" class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
+                </div>
+
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-400">Дата рождения (например 02.11.2010):</label>
                     <input type="text" id="editDobInput" placeholder="02.11.2010" class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
@@ -728,6 +879,122 @@
         let isSignUpMode = false;
         let authMethod = 'email'; // 'email' или 'phone'
         let confirmationResultObj = null;
+
+        // ===== TJWORK: ДАННЫЕ FIRESTORE =====
+        // Укажите email аккаунта, который должен иметь права администратора.
+        const ADMIN_EMAILS = ['dovud0300@gmail.com'];
+        let firestoreAds = [];
+        let firestoreUsers = [];
+        let currentChatUser = null;
+        let currentConversationId = null;
+        let unsubscribeChatMessages = null;
+        let unsubscribeAds = null;
+        let unsubscribeUsers = null;
+        let presenceTimer = null;
+
+        function isAdminUser(user = window.currentUser) {
+            const email = user && (user.email || user.phoneNumber || '').toLowerCase();
+            return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
+        }
+
+        function getDisplayNameByEmail(email) {
+            const profile = userProfilesData[email];
+            if (profile && profile.nickname) return profile.nickname;
+            const found = firestoreUsers.find(u => u.email === email);
+            if (found && found.nickname) return found.nickname;
+            return (email || 'Пользователь').split('@')[0];
+        }
+
+        async function initializeUserAccount(user) {
+            try {
+                const email = user.email || user.phoneNumber || 'user@tjwork.tj';
+                const userRef = window.fbDoc(window.firebaseDb, 'users', user.uid);
+                const snap = await window.fbGetDoc(userRef);
+                const existing = snap.exists() ? snap.data() : {};
+
+                if (existing.banned) {
+                    const until = existing.banUntil || null;
+                    if (!until || until > Date.now()) {
+                        alert(until ? `Ваш аккаунт заблокирован до ${new Date(until).toLocaleString()}.` : 'Ваш аккаунт заблокирован администратором.');
+                        await window.fbSignOut(window.firebaseAuth);
+                        return;
+                    }
+                }
+
+                const local = userProfilesData[email] || {};
+                const profile = {
+                    email,
+                    uid: user.uid,
+                    nickname: existing.nickname || local.nickname || '',
+                    dob: existing.dob || local.dob || '02.11.2010',
+                    phone: existing.phone || local.phone || user.phoneNumber || '+992 90 000 0000',
+                    bio: existing.bio || local.bio || '',
+                    avatar: existing.avatar || local.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                };
+                userProfilesData[email] = profile;
+                saveUserProfilesStorage();
+                await window.fbSetDoc(userRef, { ...profile, uid: user.uid, online: true, lastSeen: window.fbServerTimestamp(), isAdmin: isAdminUser(user) }, { merge: true });
+                renderProfileData();
+                startPresence();
+                await migrateLocalAdsToFirestore();
+                startRealtimeDataListeners();
+                if (isAdminUser(user)) loadAdminDashboard();
+            } catch (error) {
+                console.error('TJWORK account sync:', error);
+                syncUserProfileFromFirebase(user);
+            }
+        }
+
+        function startPresence() {
+            if (presenceTimer) clearInterval(presenceTimer);
+            const touch = async () => {
+                const user = window.currentUser;
+                if (!user) return;
+                try {
+                    await window.fbSetDoc(window.fbDoc(window.firebaseDb, 'users', user.uid), { online: true, lastSeen: window.fbServerTimestamp() }, { merge: true });
+                } catch (e) {}
+            };
+            touch();
+            presenceTimer = setInterval(touch, 30000);
+            window.addEventListener('beforeunload', () => {
+                try { const u = window.currentUser; if (u) window.fbSetDoc(window.fbDoc(window.firebaseDb, 'users', u.uid), { online: false, lastSeen: window.fbServerTimestamp() }, { merge: true }); } catch (e) {}
+            });
+        }
+
+        function startRealtimeDataListeners() {
+            if (unsubscribeAds) unsubscribeAds();
+            if (unsubscribeUsers) unsubscribeUsers();
+            try {
+                unsubscribeAds = window.fbOnSnapshot(window.fbCollection(window.firebaseDb, 'ads'), snap => {
+                    firestoreAds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    if (firestoreAds.length) {
+                        allAds = firestoreAds;
+                        saveAdsToStorage();
+                    } else {
+                        migrateLocalAdsToFirestore();
+                    }
+                    renderAds();
+                    if (document.getElementById('page-profile') && !document.getElementById('page-profile').classList.contains('hidden')) renderProfileData();
+                    if (isAdminUser()) renderAdminAds();
+                });
+                unsubscribeUsers = window.fbOnSnapshot(window.fbCollection(window.firebaseDb, 'users'), snap => {
+                    firestoreUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderAdminStats();
+                    renderAdminUsers();
+                    renderAdminPublicProfile();
+                    renderChatContacts();
+                });
+            } catch (e) { console.error('TJWORK realtime:', e); }
+        }
+
+        async function migrateLocalAdsToFirestore() {
+            if (!window.currentUser || !allAds.length) return;
+            for (const ad of allAds) {
+                try {
+                    await window.fbSetDoc(window.fbDoc(window.firebaseDb, 'ads', String(ad.id)), ad, { merge: true });
+                } catch (e) { break; }
+            }
+        }
         
         const categoriesData = {
             remote: [
@@ -907,16 +1174,28 @@
 
             if (isAuth && user) {
                 container.innerHTML = `
-                    <button onclick="showPage('profile')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
-                        <span>👤 Профиль</span>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="showPage('profile')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
+                            <span>👤 Профиль</span>
+                        </button>
+                    </div>
                 `;
+                const burgerChatLink = document.getElementById('burgerChatLink');
+                const burgerAdminLink = document.getElementById('burgerAdminLink');
+                if (burgerChatLink) burgerChatLink.classList.remove('hidden');
+                // Страница админа доступна всем, а права управления проверяются внутри самой страницы.
+                if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
             } else {
                 container.innerHTML = `
                     <button onclick="openAuthModal()" id="mainAuthNavBtn" class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
                         <span class="lang-ru">Вход</span><span class="lang-tj">Ворид шудан</span>
                     </button>
                 `;
+                const burgerChatLink = document.getElementById('burgerChatLink');
+                const burgerAdminLink = document.getElementById('burgerAdminLink');
+                if (burgerChatLink) burgerChatLink.classList.add('hidden');
+                // Админку можно просматривать без регистрации.
+                if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
             }
         }
 
@@ -931,6 +1210,7 @@
             if (!userProfilesData[email]) {
                 userProfilesData[email] = {
                     email: email,
+                    nickname: '',
                     dob: '02.11.2010',
                     phone: user.phoneNumber || '+992 90 000 0000',
                     bio: '',
@@ -953,6 +1233,7 @@
             const email = getCurrentUserEmail();
             let profile = userProfilesData[email] || {
                 email: email,
+                nickname: '',
                 dob: '02.11.2010',
                 phone: '+992 90 000 0000',
                 bio: '',
@@ -960,6 +1241,8 @@
             };
 
             document.getElementById('profileUserEmailTitle').innerText = profile.email;
+            const nicknameEl = document.getElementById('profileNicknameTitle');
+            if (nicknameEl) nicknameEl.innerText = profile.nickname ? '@' + profile.nickname : 'Никнейм не установлен';
             document.getElementById('profileDisplayDob').innerText = profile.dob;
             document.getElementById('profileDisplayPhone').innerText = profile.phone;
             const bioEl = document.getElementById('profileDisplayBio');
@@ -1009,9 +1292,12 @@
             });
         }
 
-        function deleteMyAd(id) {
-            allAds = allAds.filter(ad => ad.id !== id);
+        async function deleteMyAd(id) {
+            allAds = allAds.filter(ad => String(ad.id) !== String(id));
             saveAdsToStorage();
+            if (window.firebaseDb) {
+                try { await window.fbDeleteDoc(window.fbDoc(window.firebaseDb, 'ads', String(id))); } catch (e) { console.error(e); }
+            }
             renderProfileData();
             renderAds();
             alert('Объявление удалено!');
@@ -1090,6 +1376,7 @@
         function openEditProfileModal() {
             const email = getCurrentUserEmail();
             let profile = userProfilesData[email] || {};
+            document.getElementById('editNicknameInput').value = profile.nickname || '';
             document.getElementById('editDobInput').value = profile.dob || '02.11.2010';
             document.getElementById('editBioInput').value = profile.bio || '';
             document.getElementById('editPhoneInput').value = profile.phone || '';
@@ -1102,12 +1389,19 @@
         function saveProfileChanges() {
             const email = getCurrentUserEmail();
             if (!userProfilesData[email]) userProfilesData[email] = { email };
+            userProfilesData[email].nickname = document.getElementById('editNicknameInput').value.trim().replace(/^@/, '').replace(/\s+/g, '_');
             userProfilesData[email].dob = document.getElementById('editDobInput').value;
             userProfilesData[email].bio = document.getElementById('editBioInput').value;
             userProfilesData[email].phone = document.getElementById('editPhoneInput').value;
             saveUserProfilesStorage();
+            if (window.currentUser) {
+                window.fbSetDoc(window.fbDoc(window.firebaseDb, 'users', window.currentUser.uid), {
+                    nickname: userProfilesData[email].nickname, dob: userProfilesData[email].dob, bio: userProfilesData[email].bio, phone: userProfilesData[email].phone, avatar: userProfilesData[email].avatar || ''
+                }, { merge: true }).catch(e => console.error(e));
+            }
             closeEditProfileModal();
             renderProfileData();
+            renderAdminPublicProfile();
             alert('Изменения сохранены!');
         }
 
@@ -1199,6 +1493,176 @@
             }
         }
 
+        // ===== TJWORK: ЧАТ =====
+        function makeConversationId(uid1, uid2) {
+            return [uid1, uid2].sort().join('_');
+        }
+
+        async function findUserByEmail(email) {
+            const local = firestoreUsers.find(u => u.email === email);
+            if (local) return local;
+            try {
+                const q = window.fbQuery(window.fbCollection(window.firebaseDb, 'users'), window.fbWhere('email', '==', email), window.fbLimit(1));
+                const snap = await window.fbGetDocs(q);
+                return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+            } catch (e) { return null; }
+        }
+
+        async function openChatWithUser(email) {
+            if (!window.currentUser) { openAuthModal(); return; }
+            if (!email || email === getCurrentUserEmail()) { alert('Нельзя открыть чат с самим собой.'); return; }
+            const target = await findUserByEmail(email);
+            if (!target || !target.uid) { alert('Профиль пользователя пока не синхронизирован. Пусть он войдёт на сайт один раз.'); return; }
+            currentChatUser = target;
+            currentConversationId = makeConversationId(window.currentUser.uid, target.uid);
+            showPage('messages');
+            renderChatHeader();
+            subscribeToChatMessages();
+            renderChatContacts();
+        }
+
+        function renderChatHeader() {
+            const el = document.getElementById('chatHeader');
+            if (!el) return;
+            if (!currentChatUser) { el.innerHTML = '<div class="font-bold text-white">Выберите диалог</div><div class="text-xs text-slate-500 mt-1">Здесь появятся ваши сообщения.</div>'; return; }
+            const name = currentChatUser.nickname ? '@' + currentChatUser.nickname : (currentChatUser.email || 'Пользователь');
+            el.innerHTML = `<div class="flex items-center gap-3"><img src="${currentChatUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}" class="w-10 h-10 rounded-full object-cover"><div><div class="font-bold text-white">${name}</div><div class="text-xs ${currentChatUser.online ? 'text-emerald-400' : 'text-slate-500'}">${currentChatUser.online ? '● онлайн' : 'не в сети'}</div></div></div>`;
+        }
+
+        async function subscribeToChatMessages() {
+            if (unsubscribeChatMessages) unsubscribeChatMessages();
+            const container = document.getElementById('chatMessages');
+            if (!container || !currentConversationId) return;
+            const messagesRef = window.fbCollection(window.firebaseDb, 'conversations', currentConversationId, 'messages');
+            const q = window.fbQuery(messagesRef, window.fbOrderBy('createdAt', 'asc'));
+            try {
+                unsubscribeChatMessages = window.fbOnSnapshot(q, snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) { container.innerHTML = '<div class="h-full min-h-[400px] flex items-center justify-center text-slate-600 text-sm">Начните диалог. Никаких голубей-почтальонов, всё в браузере.</div>'; return; }
+                    snap.forEach(d => {
+                        const m = d.data();
+                        const mine = m.senderUid === window.currentUser.uid;
+                        const time = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                        container.innerHTML += `<div class="flex ${mine ? 'justify-end' : 'justify-start'}"><div class="max-w-[80%] px-4 py-2.5 rounded-2xl ${mine ? 'bg-emerald-500 text-slate-950 rounded-br-md' : 'bg-slate-800 text-slate-100 rounded-bl-md'}"><div class="text-sm whitespace-pre-wrap break-words">${escapeHtml(m.text || '')}</div><div class="text-[10px] opacity-60 text-right mt-1">${time}</div></div></div>`;
+                    });
+                    container.scrollTop = container.scrollHeight;
+                });
+            } catch (e) { container.innerHTML = '<div class="text-red-400 text-sm">Не удалось загрузить сообщения. Проверьте Firestore Rules.</div>'; }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatMessageInput');
+            const text = (input && input.value || '').trim();
+            if (!text || !currentChatUser || !currentConversationId || !window.currentUser) return;
+            try {
+                const msgRef = window.fbDoc(window.fbCollection(window.firebaseDb, 'conversations', currentConversationId, 'messages'));
+                await window.fbSetDoc(msgRef, { text, senderUid: window.currentUser.uid, senderEmail: getCurrentUserEmail(), createdAt: window.fbServerTimestamp() });
+                await window.fbSetDoc(window.fbDoc(window.firebaseDb, 'conversations', currentConversationId), {
+                    participants: [window.currentUser.uid, currentChatUser.uid],
+                    participantEmails: [getCurrentUserEmail(), currentChatUser.email],
+                    updatedAt: window.fbServerTimestamp(), lastMessage: text
+                }, { merge: true });
+                input.value = '';
+            } catch (e) { alert('Не удалось отправить сообщение. Проверьте Firestore Rules.'); }
+        }
+
+        async function renderChatContacts() {
+            const container = document.getElementById('chatContactsList');
+            if (!container || !window.currentUser) return;
+            try {
+                const q = window.fbQuery(window.fbCollection(window.firebaseDb, 'conversations'), window.fbWhere('participants', 'array-contains', window.currentUser.uid));
+                const snap = await window.fbGetDocs(q);
+                if (snap.empty) { container.innerHTML = '<div class="text-center text-slate-500 text-sm py-8">Диалогов пока нет.</div>'; return; }
+                const list = [];
+                snap.forEach(d => { const c=d.data(); const otherUid=(c.participants||[]).find(x=>x!==window.currentUser.uid); const other=firestoreUsers.find(u=>u.uid===otherUid); if(other) list.push({c,other}); });
+                list.sort((a,b)=>(b.c.updatedAt?.seconds||0)-(a.c.updatedAt?.seconds||0));
+                container.innerHTML = list.map(({other}) => { const active=currentChatUser&&currentChatUser.uid===other.uid; return `<button onclick="openChatWithUser('${escapeAttr(other.email)}')" class="w-full text-left p-3 rounded-xl ${active?'bg-emerald-500/10 border border-emerald-500/20':'hover:bg-slate-800'} flex items-center gap-3"><img src="${other.avatar||'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}" class="w-10 h-10 rounded-full object-cover"><div class="min-w-0"><div class="font-bold text-sm text-white truncate">${escapeHtml(other.nickname?'@'+other.nickname:other.email||'Пользователь')}</div><div class="text-[11px] ${other.online?'text-emerald-400':'text-slate-500'}">${other.online?'онлайн':'офлайн'}</div></div></button>`; }).join('');
+            } catch (e) { container.innerHTML = '<div class="text-red-400 text-xs p-3">Чаты требуют включённого Firestore.</div>'; }
+        }
+
+        function startAdminChat() { openChatWithUser(ADMIN_EMAILS[0]); }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
+        }
+        function escapeAttr(value) { return String(value || '').replace(/['\\]/g, '\\$&'); }
+
+        // ===== TJWORK: АДМИНКА =====
+        function renderAdminPublicProfile() {
+            const admin = firestoreUsers.find(u => ADMIN_EMAILS.map(e=>e.toLowerCase()).includes((u.email||'').toLowerCase())) || {};
+            const name = admin.nickname ? '@' + admin.nickname : 'Администратор TJWORK';
+            const avatar = admin.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+            const bio = admin.bio || 'Администратор платформы TJWORK. Здесь можно получить помощь по работе сайта.';
+            const nameEl=document.getElementById('adminProfileName'), bioEl=document.getElementById('adminProfileBio'), img=document.getElementById('adminProfileAvatar');
+            if(nameEl) nameEl.innerText=name; if(bioEl) bioEl.innerText=bio; if(img) img.src=avatar;
+            const controls=document.getElementById('adminControls');
+            const contact=document.getElementById('adminContactBtn');
+            if(controls) controls.classList.toggle('hidden', !isAdminUser());
+            const canChatWithAdmin = !!window.currentUser && !isAdminUser();
+            if(contact) contact.classList.toggle('hidden', !canChatWithAdmin);
+            const badge=document.getElementById('adminPublicBadge');
+            if(badge) badge.innerText=isAdminUser()?'🛡 Администратор, это вы':'🛡 Администратор TJWORK';
+        }
+
+        async function loadAdminDashboard() {
+            renderAdminPublicProfile();
+            if (!isAdminUser()) return;
+            try {
+                const usersSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'users'));
+                firestoreUsers=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
+                const adsSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'ads'));
+                firestoreAds=adsSnap.docs.map(d=>({id:d.id,...d.data()}));
+                renderAdminStats(); renderAdminUsers(); renderAdminAds();
+            } catch(e) { console.error(e); alert('Админка подключена, но Firestore не разрешил чтение данных. Проверьте Rules.'); }
+        }
+
+        function renderAdminStats() {
+            const users=firestoreUsers.length;
+            const ads=firestoreAds.length || allAds.length;
+            const online=firestoreUsers.filter(u=>u.online && (!u.lastSeen?.toDate || (Date.now()-u.lastSeen.toDate().getTime()<120000))).length;
+            const a=document.getElementById('adminUsersCount'),b=document.getElementById('adminAdsCount'),c=document.getElementById('adminOnlineCount');
+            if(a)a.innerText=users; if(b)b.innerText=ads; if(c)c.innerText=online;
+        }
+
+        function renderAdminUsers() {
+            const c=document.getElementById('adminUsersList'); if(!c || !isAdminUser()) return;
+            if(!firestoreUsers.length){c.innerHTML='<div class="text-slate-500 text-sm">Пользователей пока нет.</div>';return;}
+            c.innerHTML=firestoreUsers.map(u=>{
+                const banned=u.banned && (!u.banUntil || u.banUntil>Date.now());
+                const name=u.nickname?'@'+u.nickname:(u.email||u.phoneNumber||'Пользователь');
+                return `<div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2"><div class="min-w-0"><div class="font-bold text-sm text-white truncate">${escapeHtml(name)}</div><div class="text-[11px] text-slate-500 truncate">${escapeHtml(u.email||u.phoneNumber||'')}</div></div><button onclick="adminToggleBan('${escapeAttr(u.id)}', ${banned})" class="shrink-0 text-xs font-bold px-3 py-2 rounded-lg ${banned?'bg-emerald-500 text-slate-950':'bg-red-500/10 text-red-400 border border-red-500/20'}">${banned?'Разбанить':'Забанить'}</button></div>`;
+            }).join('');
+        }
+
+        function renderAdminAds() {
+            const c=document.getElementById('adminAdsList'); if(!c || !isAdminUser()) return;
+            const ads=firestoreAds.length?firestoreAds:allAds;
+            if(!ads.length){c.innerHTML='<div class="text-slate-500 text-sm">Объявлений пока нет.</div>';return;}
+            c.innerHTML=ads.map(ad=>`<div class="bg-slate-900 border border-slate-800 rounded-xl p-4"><div class="text-xs text-emerald-400 font-bold">${escapeHtml(ad.cat||'')}</div><div class="font-bold text-white mt-1">${escapeHtml(ad.title||'Без названия')}</div><div class="text-xs text-slate-500 mt-1">${escapeHtml(ad.authorEmail||'')}</div><button onclick="adminDeleteAd('${escapeAttr(ad.id)}')" class="mt-3 text-xs text-red-400 hover:underline">Удалить объявление</button></div>`).join('');
+        }
+
+        async function adminBanByEmail() {
+            if(!isAdminUser()) return;
+            const email=(document.getElementById('adminBanEmail').value||'').trim().toLowerCase();
+            const duration=document.getElementById('adminBanDuration').value;
+            const target=firestoreUsers.find(u=>(u.email||'').toLowerCase()===email);
+            if(!target){alert('Пользователь не найден. Пусть он хотя бы один раз войдёт на сайт.');return;}
+            if((target.email||'').toLowerCase()===getCurrentUserEmail().toLowerCase()){alert('Нельзя заблокировать самого себя.');return;}
+            const banUntil=duration==='permanent'?null:Date.now()+Number(duration);
+            try{await window.fbUpdateDoc(window.fbDoc(window.firebaseDb,'users',target.uid||target.id),{banned:true,banUntil});alert('Пользователь заблокирован.');loadAdminDashboard();}catch(e){alert('Не удалось заблокировать: проверьте Firestore Rules.');}
+        }
+
+        async function adminToggleBan(uid,banned) {
+            if(!isAdminUser())return;
+            try{await window.fbUpdateDoc(window.fbDoc(window.firebaseDb,'users',uid),{banned:!banned,banUntil:null});loadAdminDashboard();}catch(e){alert('Не удалось изменить блокировку.');}
+        }
+
+        async function adminDeleteAd(id) {
+            if(!isAdminUser())return;
+            if(!confirm('Удалить это объявление для всех?'))return;
+            try{await window.fbDeleteDoc(window.fbDoc(window.firebaseDb,'ads',String(id)));allAds=allAds.filter(a=>String(a.id)!==String(id));saveAdsToStorage();renderAds();loadAdminDashboard();}catch(e){alert('Не удалось удалить объявление.');}
+        }
+
         function toggleLang() {
             const body = document.body;
             if (currentLang === 'ru') {
@@ -1215,7 +1679,7 @@
         }
 
         function showPage(pageId) {
-            ['home', 'catalog', 'page-category-detail', 'useful', 'help', 'profile'].forEach(p => {
+            ['home', 'catalog', 'page-category-detail', 'useful', 'help', 'profile', 'messages', 'admin'].forEach(p => {
                 const el = document.getElementById('page-' + p);
                 if (el) el.classList.add('hidden');
             });
@@ -1226,7 +1690,7 @@
             const heroControls = document.getElementById('homeHeroControls');
             const filtersBlock = document.getElementById('homeFiltersBlock');
             if (heroBanner) {
-                if (pageId === 'profile') heroBanner.classList.add('hidden');
+                if (['profile','messages','admin'].includes(pageId)) heroBanner.classList.add('hidden');
                 else heroBanner.classList.remove('hidden');
             }
             if (pageId === 'home') {
@@ -1239,6 +1703,14 @@
 
             if (pageId === 'profile') {
                 renderProfileData();
+            }
+            if (pageId === 'messages') {
+                if (!window.currentUser) { openAuthModal(); return; }
+                renderChatContacts();
+            }
+            if (pageId === 'admin') {
+                renderAdminPublicProfile();
+                loadAdminDashboard();
             }
 
             window.scrollTo(0, 0);
@@ -1275,9 +1747,12 @@
                             <div>👤 <b>${ad.ageInfo || ''}</b></div>
                             <div>📞 Контакт: <a href="tel:${ad.phone}" class="text-emerald-400 font-bold hover:underline">${ad.phone || 'Не указан'}</a></div>
                         </div>
-                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
                             <span class="text-amber-400 font-extrabold text-base">${ad.price}</span>
-                            <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''}</span>
+                                ${ad.authorEmail && ad.authorEmail !== getCurrentUserEmail() ? `<button onclick="openChatWithUser('${escapeAttr(ad.authorEmail)}')" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-500/20">💬 Написать</button>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1563,6 +2038,10 @@
 
             allAds.unshift(newAdObj);
             saveAdsToStorage();
+            if (window.firebaseDb && window.currentUser) {
+                window.fbSetDoc(window.fbDoc(window.firebaseDb, 'ads', String(newAdObj.id)), { ...newAdObj, authorUid: window.currentUser.uid, authorNickname: getDisplayNameByEmail(authorEmail) }, { merge: true })
+                    .catch(e => console.error('Не удалось сохранить объявление в Firestore:', e));
+            }
             closeCreateModal();
             renderAds();
             alert('Объявление успешно опубликовано!');
