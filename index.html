@@ -113,58 +113,154 @@
     </style>
 
 <style id="burger-animation">
-/* Бургер-меню открывается поверх баннера, не меняя высоту страницы. */
+/* Профессиональное бургер-меню: раскрывается поверх контента и не двигает страницу. */
 #burgerMenu {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 10px);
     right: 0;
-    width: min(50vw, 380px);
-    max-width: calc(100vw - 1rem);
+    width: min(88vw, 380px);
     max-height: 0;
+    padding: 0 10px;
     margin: 0;
-    padding-top: 0;
-    padding-bottom: 0;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     overflow: hidden;
-    box-shadow: 0 18px 40px rgba(0,0,0,.28);
-    transition: max-height .32s cubic-bezier(.22,1,.36,1),
+    border: 1px solid transparent;
+    border-radius: 24px;
+    transform: translateY(-8px) scale(.985);
+    transform-origin: top right;
+    box-shadow: 0 24px 70px rgba(0,0,0,.42);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: max-height .38s cubic-bezier(.22,1,.36,1),
                 padding .28s ease,
-                opacity .18s ease,
-                visibility 0s linear .32s;
+                opacity .22s ease,
+                transform .34s cubic-bezier(.22,1,.36,1),
+                border-color .22s ease,
+                visibility 0s linear .38s;
 }
 #burgerMenu.burger-open {
-    max-height: 70vh;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    max-height: 72vh;
+    padding: 12px 10px;
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition: max-height .34s cubic-bezier(.22,1,.36,1),
+    border-color: rgba(51,65,85,.9);
+    transform: translateY(0) scale(1);
+    transition: max-height .42s cubic-bezier(.22,1,.36,1),
                 padding .28s ease,
                 opacity .2s ease,
+                transform .34s cubic-bezier(.22,1,.36,1),
+                border-color .22s ease,
                 visibility 0s linear 0s;
 }
 #burgerMenu .burger-item {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 11px 14px !important;
+    border-radius: 16px;
     opacity: 0;
-    transform: translateY(4px);
-    transition: opacity .18s ease, transform .24s cubic-bezier(.22,1,.36,1);
+    transform: translateY(-5px);
+    transition: opacity .18s ease, transform .28s cubic-bezier(.22,1,.36,1), background-color .2s ease, color .2s ease;
+}
+#burgerMenu .burger-item:hover {
+    background: rgba(30,41,59,.75);
+    color: #fff;
 }
 #burgerMenu.burger-open .burger-item {
     opacity: 1;
     transform: translateY(0);
 }
-#burgerMenu.burger-open .burger-item:nth-child(1) { transition-delay: .02s; }
-#burgerMenu.burger-open .burger-item:nth-child(2) { transition-delay: .04s; }
-#burgerMenu.burger-open .burger-item:nth-child(3) { transition-delay: .06s; }
-#burgerMenu.burger-open .burger-item:nth-child(4) { transition-delay: .08s; }
-#burgerMenu.burger-open .burger-item:nth-child(5) { transition-delay: .10s; }
-#burgerMenu.burger-open .burger-item:nth-child(6) { transition-delay: .12s; }
+#burgerMenu.burger-open .burger-item:nth-child(1) { transition-delay: .03s; }
+#burgerMenu.burger-open .burger-item:nth-child(2) { transition-delay: .06s; }
+#burgerMenu.burger-open .burger-item:nth-child(3) { transition-delay: .09s; }
+#burgerMenu.burger-open .burger-item:nth-child(4) { transition-delay: .12s; }
+#burgerMenu.burger-open .burger-item:nth-child(5) { transition-delay: .15s; }
+#burgerMenu.burger-open .burger-item:nth-child(6) { transition-delay: .18s; }
+
+/* Плавная заставка загрузки TJWORK */
+#tjworkSplash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 38%, rgba(16,185,129,.13), transparent 30%), #080c14;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .28s ease, visibility .28s ease;
+}
+#tjworkSplash.splash-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.splash-logo-wrap {
+    text-align: center;
+    transform: translateY(4px);
+}
+.splash-logo {
+    font-size: clamp(42px, 11vw, 82px);
+    font-weight: 1000;
+    letter-spacing: -0.065em;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 0 28px rgba(16,185,129,.25);
+    animation: splashLogoIn .75s cubic-bezier(.22,1,.36,1) both, splashGlow 2.1s ease-in-out .6s infinite;
+}
+.splash-logo .splash-accent { color: #34d399; }
+.splash-caption {
+    margin-top: 14px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+}
+.splash-loader {
+    width: min(280px, 68vw);
+    height: 4px;
+    margin: 22px auto 0;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(51,65,85,.8);
+}
+.splash-loader span {
+    display: block;
+    width: 38%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #10b981, #6ee7b7);
+    box-shadow: 0 0 18px rgba(16,185,129,.55);
+    animation: splashLoad 1.25s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes splashLogoIn {
+    from { opacity: 0; transform: translateY(18px) scale(.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes splashGlow {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(52,211,153,0)); }
+    50% { filter: drop-shadow(0 0 18px rgba(52,211,153,.18)); }
+}
+@keyframes splashLoad {
+    0% { transform: translateX(-150%); }
+    100% { transform: translateX(390%); }
+}
 </style>
 
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active overflow-x-hidden">
+    <div id="tjworkSplash" aria-hidden="true">
+        <div class="splash-logo-wrap">
+            <div class="splash-logo">TJWORK<span class="splash-accent">.</span></div>
+            <div class="splash-caption">Фриланс в Таджикистане</div>
+            <div class="splash-loader" aria-label="Загрузка"><span></span></div>
+        </div>
+    </div>
+
 
     <!-- HEADER -->
     <header class="bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
@@ -207,8 +303,8 @@
             <a href="#" onclick="showPage('catalog'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
             <a href="#" onclick="showPage('useful'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
             <a href="#" onclick="showPage('help'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
-            <a id="burgerChatLink" href="#" onclick="showPage('messages'); toggleBurger();" class="burger-item hidden font-medium py-1 text-slate-300"><span class="lang-ru">💬 Чат</span><span class="lang-tj">💬 Чат</span></a>
-            <a id="burgerAdminLink" href="#" onclick="showPage('admin'); toggleBurger();" class="burger-item font-medium py-1 text-amber-400"><span class="lang-ru">🛡 Админ</span><span class="lang-tj">🛡 Админ</span></a>
+            <a id="burgerChatLink" href="#" onclick="showPage('messages'); toggleBurger();" class="burger-item hidden font-medium py-1 text-slate-300"><span class="lang-ru">Чат</span><span class="lang-tj">Чат</span></a>
+            <a id="burgerAdminLink" href="#" onclick="showPage('admin'); toggleBurger();" class="burger-item font-medium py-1 text-amber-400"><span class="lang-ru">Админ</span><span class="lang-tj">Админ</span></a>
         </div>
     </header>
 
@@ -476,7 +572,8 @@
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
                     <div class="relative group shrink-0">
                         <div class="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 shadow-xl">
-                            <img id="profileAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Аватар" class="w-full h-full object-cover rounded-full bg-slate-900">
+                            <div id="profileAvatarInitial" class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl md:text-5xl font-black text-white select-none"></div>
+                            <img id="profileAvatarImg" src="" alt="Аватар" class="hidden w-full h-full object-cover rounded-full bg-slate-900">
                         </div>
                         <label for="avatarFileInput" class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold cursor-pointer transition">
                             Сменить фото
@@ -609,11 +706,16 @@
         <div id="page-admin" class="hidden max-w-6xl mx-auto space-y-6">
             <div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
                 <div class="flex flex-col md:flex-row items-center gap-6">
-                    <img id="adminProfileAvatar" class="w-24 h-24 rounded-full object-cover border-4 border-emerald-500/30" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Администратор">
+                    <div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-cyan-400 to-blue-500 shadow-lg shrink-0">
+                        <div id="adminProfileInitial" class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-3xl font-black text-white select-none"></div>
+                        <img id="adminProfileAvatar" class="hidden w-full h-full rounded-full object-cover" src="" alt="Профиль администратора">
+                    </div>
                     <div class="flex-1 text-center md:text-left">
                         <div id="adminPublicBadge" class="inline-flex px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold mb-2">🛡 Администратор TJWORK</div>
                         <h2 id="adminProfileName" class="text-2xl md:text-3xl font-black text-white">Администратор</h2>
-                        <p id="adminProfileBio" class="text-slate-400 text-sm mt-2">Здесь находится профиль администратора TJWORK.</p>
+                        <div id="adminProfileEmail" class="text-xs text-slate-500 mt-1">dovud0300@gmail.com</div>
+                        <div id="adminProfileDob" class="text-sm text-slate-300 mt-3"></div>
+                        <p id="adminProfileBio" class="text-slate-400 text-sm mt-2">Профиль администратора загружается...</p>
                     </div>
                     <button id="adminContactBtn" onclick="startAdminChat()" class="hidden bg-slate-800 border border-slate-700 text-white font-bold px-5 py-3 rounded-xl hover:bg-slate-700 transition">💬 Написать админу</button>
                 </div>
@@ -929,11 +1031,12 @@
                     dob: existing.dob || local.dob || '02.11.2010',
                     phone: existing.phone || local.phone || user.phoneNumber || '+992 90 000 0000',
                     bio: existing.bio || local.bio || '',
-                    avatar: existing.avatar || local.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                    avatar: existing.avatar || local.avatar || ''
                 };
                 userProfilesData[email] = profile;
                 saveUserProfilesStorage();
                 await window.fbSetDoc(userRef, { ...profile, uid: user.uid, online: true, lastSeen: window.fbServerTimestamp(), isAdmin: isAdminUser(user) }, { merge: true });
+                if (isAdminUser(user)) await syncPublicAdminProfile(profile);
                 renderProfileData();
                 startPresence();
                 await migrateLocalAdsToFirestore();
@@ -1204,6 +1307,56 @@
             showPage('profile');
         }
 
+        function getAvatarInitial(name) {
+            const clean = String(name || 'Пользователь').trim().replace(/^@+/, '');
+            return (Array.from(clean)[0] || 'П').toUpperCase();
+        }
+
+        function isDefaultAvatar(url) {
+            return !url || String(url).includes('images.unsplash.com/photo-1534528741775-53994a69daeb');
+        }
+
+        function setAvatarDisplay(imgId, initialId, avatar, displayName) {
+            const img = document.getElementById(imgId);
+            const initial = document.getElementById(initialId);
+            const hasPhoto = !!avatar && !isDefaultAvatar(avatar);
+            if (img) {
+                if (hasPhoto) {
+                    img.src = avatar;
+                    img.classList.remove('hidden');
+                } else {
+                    img.removeAttribute('src');
+                    img.classList.add('hidden');
+                }
+            }
+            if (initial) {
+                initial.innerText = getAvatarInitial(displayName);
+                initial.classList.toggle('hidden', hasPhoto);
+            }
+        }
+
+        function getBirthYear(value) {
+            const match = String(value || '').match(/(?:19|20)\d{2}/);
+            return match ? match[0] : '';
+        }
+
+        function syncPublicAdminProfile(profile) {
+            if (!window.currentUser || !isAdminUser()) return Promise.resolve();
+            const publicProfile = {
+                email: ADMIN_EMAILS[0],
+                nickname: profile.nickname || '',
+                dob: profile.dob || '',
+                bio: profile.bio || '',
+                avatar: isDefaultAvatar(profile.avatar) ? '' : profile.avatar,
+                updatedAt: window.fbServerTimestamp()
+            };
+            return window.fbSetDoc(
+                window.fbDoc(window.firebaseDb, 'publicProfiles', 'admin'),
+                publicProfile,
+                { merge: true }
+            ).catch(e => console.error('Не удалось обновить публичный профиль админа:', e));
+        }
+
         function syncUserProfileFromFirebase(user) {
             if (!user) return;
             const email = user.email || user.phoneNumber || 'user@tjwork.tj';
@@ -1214,7 +1367,7 @@
                     dob: '02.11.2010',
                     phone: user.phoneNumber || '+992 90 000 0000',
                     bio: '',
-                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                    avatar: ''
                     };
                 saveUserProfilesStorage();
             }
@@ -1237,7 +1390,7 @@
                 dob: '02.11.2010',
                 phone: '+992 90 000 0000',
                 bio: '',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                avatar: ''
             };
 
             document.getElementById('profileUserEmailTitle').innerText = profile.email;
@@ -1247,8 +1400,7 @@
             document.getElementById('profileDisplayPhone').innerText = profile.phone;
             const bioEl = document.getElementById('profileDisplayBio');
             if (bioEl) bioEl.innerText = profile.bio || 'Пока ничего не указано.';
-            const avatarEl = document.getElementById('profileAvatarImg');
-            if (avatarEl) avatarEl.src = profile.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+            setAvatarDisplay('profileAvatarImg', 'profileAvatarInitial', profile.avatar, profile.nickname || profile.email);
             document.getElementById('settingsEmailInput').value = profile.email;
             document.getElementById('settingsPhoneInput').value = profile.phone;
 
@@ -1367,6 +1519,10 @@
                 }
                 userProfilesData[email].avatar = base64Img;
                 saveUserProfilesStorage();
+                if (window.currentUser) {
+                    window.fbSetDoc(window.fbDoc(window.firebaseDb, 'users', window.currentUser.uid), { avatar: base64Img }, { merge: true }).catch(e => console.error(e));
+                    syncPublicAdminProfile(userProfilesData[email]);
+                }
                 renderProfileData();
                 alert('Фото профиля успешно обновлено!');
             }
@@ -1398,6 +1554,7 @@
                 window.fbSetDoc(window.fbDoc(window.firebaseDb, 'users', window.currentUser.uid), {
                     nickname: userProfilesData[email].nickname, dob: userProfilesData[email].dob, bio: userProfilesData[email].bio, phone: userProfilesData[email].phone, avatar: userProfilesData[email].avatar || ''
                 }, { merge: true }).catch(e => console.error(e));
+                syncPublicAdminProfile(userProfilesData[email]);
             }
             closeEditProfileModal();
             renderProfileData();
@@ -1588,24 +1745,59 @@
         function escapeAttr(value) { return String(value || '').replace(/['\\]/g, '\\$&'); }
 
         // ===== TJWORK: АДМИНКА =====
-        function renderAdminPublicProfile() {
-            const admin = firestoreUsers.find(u => ADMIN_EMAILS.map(e=>e.toLowerCase()).includes((u.email||'').toLowerCase())) || {};
-            const name = admin.nickname ? '@' + admin.nickname : 'Администратор TJWORK';
-            const avatar = admin.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
-            const bio = admin.bio || 'Администратор платформы TJWORK. Здесь можно получить помощь по работе сайта.';
-            const nameEl=document.getElementById('adminProfileName'), bioEl=document.getElementById('adminProfileBio'), img=document.getElementById('adminProfileAvatar');
-            if(nameEl) nameEl.innerText=name; if(bioEl) bioEl.innerText=bio; if(img) img.src=avatar;
-            const controls=document.getElementById('adminControls');
-            const contact=document.getElementById('adminContactBtn');
-            if(controls) controls.classList.toggle('hidden', !isAdminUser());
+        async function renderAdminPublicProfile() {
+            const adminEmail = ADMIN_EMAILS[0].toLowerCase();
+            let admin = {};
+
+            try {
+                if (window.firebaseDb) {
+                    const publicSnap = await window.fbGetDoc(window.fbDoc(window.firebaseDb, 'publicProfiles', 'admin'));
+                    if (publicSnap.exists()) admin = { ...publicSnap.data() };
+                }
+            } catch (e) {
+                console.warn('Публичный профиль админа пока недоступен:', e);
+            }
+
+            const localAdmin = userProfilesData[adminEmail] || {};
+            admin = { ...localAdmin, ...admin };
+            if (!admin.nickname || !admin.dob || admin.avatar === undefined) {
+                try {
+                    const found = await findUserByEmail(adminEmail);
+                    if (found) admin = { ...found, ...admin };
+                } catch (e) {}
+            }
+            if (!admin.email && firestoreUsers.length) {
+                const found = firestoreUsers.find(u => (u.email || '').toLowerCase() === adminEmail);
+                if (found) admin = { ...found, ...admin };
+            }
+
+            const nickname = admin.nickname || admin.email?.split('@')[0] || 'Администратор';
+            const name = '@' + nickname;
+            const avatar = isDefaultAvatar(admin.avatar) ? '' : admin.avatar;
+            const bio = admin.bio || 'Биография пока не указана.';
+            const year = getBirthYear(admin.dob);
+
+            const nameEl = document.getElementById('adminProfileName');
+            const emailEl = document.getElementById('adminProfileEmail');
+            const dobEl = document.getElementById('adminProfileDob');
+            const bioEl = document.getElementById('adminProfileBio');
+            if (nameEl) nameEl.innerText = name;
+            if (emailEl) emailEl.innerText = admin.email || ADMIN_EMAILS[0];
+            if (dobEl) dobEl.innerText = year ? 'Год рождения: ' + year : 'Год рождения: не указан';
+            if (bioEl) bioEl.innerText = bio;
+            setAvatarDisplay('adminProfileAvatar', 'adminProfileInitial', avatar, nickname);
+
+            const controls = document.getElementById('adminControls');
+            const contact = document.getElementById('adminContactBtn');
+            if (controls) controls.classList.toggle('hidden', !isAdminUser());
             const canChatWithAdmin = !!window.currentUser && !isAdminUser();
-            if(contact) contact.classList.toggle('hidden', !canChatWithAdmin);
-            const badge=document.getElementById('adminPublicBadge');
-            if(badge) badge.innerText=isAdminUser()?'🛡 Администратор, это вы':'🛡 Администратор TJWORK';
+            if (contact) contact.classList.toggle('hidden', !canChatWithAdmin);
+            const badge = document.getElementById('adminPublicBadge');
+            if (badge) badge.innerText = isAdminUser() ? 'Администратор, это вы' : 'Профиль администратора';
         }
 
         async function loadAdminDashboard() {
-            renderAdminPublicProfile();
+            await renderAdminPublicProfile();
             if (!isAdminUser()) return;
             try {
                 const usersSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'users'));
@@ -1613,6 +1805,7 @@
                 const adsSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'ads'));
                 firestoreAds=adsSnap.docs.map(d=>({id:d.id,...d.data()}));
                 renderAdminStats(); renderAdminUsers(); renderAdminAds();
+                await renderAdminPublicProfile();
             } catch(e) { console.error(e); alert('Админка подключена, но Firestore не разрешил чтение данных. Проверьте Rules.'); }
         }
 
@@ -1709,7 +1902,6 @@
                 renderChatContacts();
             }
             if (pageId === 'admin') {
-                renderAdminPublicProfile();
                 loadAdminDashboard();
             }
 
@@ -1751,7 +1943,7 @@
                             <span class="text-amber-400 font-extrabold text-base">${ad.price}</span>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''}</span>
-                                ${ad.authorEmail && ad.authorEmail !== getCurrentUserEmail() ? `<button onclick="openChatWithUser('${escapeAttr(ad.authorEmail)}')" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-500/20">💬 Написать</button>` : ''}
+                                ${renderAdChatButton(ad)}
                             </div>
                         </div>
                     </div>
@@ -2047,6 +2239,16 @@
             alert('Объявление успешно опубликовано!');
         }
 
+        function renderAdChatButton(ad) {
+            if (!ad.authorEmail) return '';
+            const currentEmail = window.currentUser ? getCurrentUserEmail().toLowerCase() : '';
+            const isOwn = !!window.currentUser && currentEmail === String(ad.authorEmail).toLowerCase();
+            if (isOwn) return '';
+            return `<button type="button" onclick="openChatWithUser('${escapeAttr(ad.authorEmail)}')" aria-label="Открыть чат с автором" title="Открыть чат с автором" class="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/20 hover:border-emerald-400/40 hover:scale-105 transition duration-200">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9.6 9.6 0 0 1-4.1-.9L3 20l1.4-4A8.1 8.1 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"></path><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"></path></svg>
+            </button>`;
+        }
+
         function renderAds() {
             const container = document.getElementById('adsList');
             if (!container) return;
@@ -2087,9 +2289,12 @@
                             <div>👤 <b>${ad.ageInfo || ''}</b></div>
                             <div>📞 Контакт: <a href="tel:${ad.phone}" class="text-emerald-400 font-bold hover:underline">${ad.phone || 'Не указан'}</a></div>
                         </div>
-                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-3">
                             <span class="text-amber-400 font-extrabold text-base">${ad.price}</span>
-                            <span class="text-xs text-slate-500">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500 text-right">${ad.prov || ''} ${ad.dist ? ', ' + ad.dist : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>
+                                ${renderAdChatButton(ad)}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2103,6 +2308,8 @@
         window.onload = function() {
             onTypeChange();
             renderAds();
+            const splash = document.getElementById('tjworkSplash');
+            setTimeout(() => splash && splash.classList.add('splash-hidden'), 550);
         };
     </script>
 </body>
