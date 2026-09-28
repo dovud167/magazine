@@ -492,8 +492,8 @@ img, video, canvas, svg {
                     <span>Админ</span>
                 </a>
 
-                <button onclick="toggleLang()" class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 text-slate-200 transition">
-                    <span id="langLabel">🇹🇯 Тоҷикӣ</span>
+                <button onclick="toggleLang()" class="bg-slate-800 border border-slate-700 w-10 h-10 p-0 rounded-xl text-lg font-bold hover:bg-slate-700 text-slate-200 transition flex items-center justify-center" title="Сменить язык" aria-label="Сменить язык">
+                    <span id="langLabel">🇹🇯</span>
                 </button>
 
                 <!-- ДИНАМИЧЕСКАЯ КНОПКА ВХОД / ПРОФИЛЬ -->
@@ -1967,8 +1967,8 @@ img, video, canvas, svg {
             if (isAuth && user) {
                 container.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <button onclick="showPage('profile')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2">
-                            <span>👤 Профиль</span>
+                        <button onclick="showPage('profile')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 w-10 h-10 p-0 rounded-xl text-lg font-bold transition shadow-md flex items-center justify-center" title="Профиль" aria-label="Профиль">
+                            <span>👤</span>
                         </button>
                     </div>
                 `;
@@ -2625,12 +2625,12 @@ img, video, canvas, svg {
                 currentLang = 'tj';
                 body.classList.remove('lang-ru-active');
                 body.classList.add('lang-tj-active');
-                document.getElementById('langLabel').innerText = '🇷🇺 Русский';
+                document.getElementById('langLabel').innerText = '🇷🇺';
             } else {
                 currentLang = 'ru';
                 body.classList.remove('lang-tj-active');
                 body.classList.add('lang-ru-active');
-                document.getElementById('langLabel').innerText = '🇹🇯 Тоҷикӣ';
+                document.getElementById('langLabel').innerText = '🇹🇯';
             }
             refreshDynamicLanguageControls();
             if (typeof renderAds === 'function') renderAds();
