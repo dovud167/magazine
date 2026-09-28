@@ -273,6 +273,98 @@
 }
 </style>
 
+
+<style id="tjwork-notifications">
+#tjworkToastStack {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(92vw, 380px);
+    pointer-events: none;
+}
+.tjwork-toast {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: start;
+    gap: 12px;
+    padding: 14px 15px;
+    border: 1px solid rgba(148,163,184,.18);
+    border-radius: 20px;
+    background: rgba(15,23,42,.92);
+    box-shadow: 0 18px 45px rgba(0,0,0,.38);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    color: #f8fafc;
+    opacity: 0;
+    transform: translateY(16px) scale(.97);
+    animation: tjworkToastIn .32s cubic-bezier(.22,1,.36,1) forwards;
+    pointer-events: auto;
+}
+.tjwork-toast.tjwork-toast-out {
+    animation: tjworkToastOut .26s ease forwards;
+}
+.tjwork-toast-icon {
+    width: 44px; height: 44px;
+    border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px;
+    background: rgba(255,255,255,.06);
+}
+.tjwork-toast.success .tjwork-toast-icon { color:#34d399; background:rgba(16,185,129,.12); }
+.tjwork-toast.error .tjwork-toast-icon { color:#fb7185; background:rgba(244,63,94,.12); }
+.tjwork-toast.warning .tjwork-toast-icon { color:#fbbf24; background:rgba(245,158,11,.12); }
+.tjwork-toast.info .tjwork-toast-icon { color:#60a5fa; background:rgba(59,130,246,.12); }
+.tjwork-toast-title { font-size:14px; font-weight:900; line-height:1.25; margin-top:2px; }
+.tjwork-toast-text { font-size:12px; line-height:1.45; color:#94a3b8; margin-top:4px; }
+.tjwork-toast-close {
+    border:0; background:transparent; color:#64748b; cursor:pointer;
+    font-size:22px; line-height:1; padding:0 2px;
+    transition:color .18s ease, transform .18s ease;
+}
+.tjwork-toast-close:hover { color:#e2e8f0; transform:scale(1.08); }
+
+#tjworkConfirmOverlay {
+    position: fixed; inset: 0; z-index: 100000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: rgba(2,6,23,.58);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    opacity: 0; visibility: hidden; pointer-events:none;
+    transition: opacity .22s ease, visibility .22s ease;
+}
+#tjworkConfirmOverlay.open { opacity:1; visibility:visible; pointer-events:auto; }
+.tjwork-confirm {
+    width:min(92vw,430px);
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:26px;
+    background:linear-gradient(180deg, rgba(17,24,39,.98), rgba(11,15,25,.98));
+    box-shadow:0 26px 80px rgba(0,0,0,.5);
+    padding:24px;
+    transform:translateY(10px) scale(.97);
+    transition:transform .28s cubic-bezier(.22,1,.36,1);
+}
+#tjworkConfirmOverlay.open .tjwork-confirm { transform:translateY(0) scale(1); }
+.tjwork-confirm-actions { display:flex; gap:10px; margin-top:20px; }
+.tjwork-confirm-actions button { flex:1; border-radius:14px; padding:12px 14px; font-weight:800; cursor:pointer; transition:transform .18s ease, opacity .18s ease; }
+.tjwork-confirm-actions button:hover { transform:translateY(-1px); }
+.tjwork-confirm-cancel { background:#1e293b; border:1px solid #334155; color:#e2e8f0; }
+.tjwork-confirm-ok { background:#ef4444; border:1px solid #ef4444; color:white; }
+@keyframes tjworkToastIn { to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes tjworkToastOut { to { opacity:0; transform:translateY(10px) scale(.98); } }
+@media (max-width: 640px) {
+  #tjworkToastStack { right:12px; left:12px; bottom:12px; width:auto; }
+  .tjwork-toast { border-radius:18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tjwork-toast, .tjwork-toast.tjwork-toast-out, #tjworkConfirmOverlay, .tjwork-confirm { animation:none !important; transition:none !important; }
+}
+</style>
+
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active overflow-x-hidden">
     <div id="tjworkSplash" aria-hidden="true">
@@ -1850,9 +1942,75 @@
 
         async function adminDeleteAd(id) {
             if(!isAdminUser())return;
-            if(!confirm('Удалить это объявление для всех?'))return;
-            try{await window.fbDeleteDoc(window.fbDoc(window.firebaseDb,'ads',String(id)));allAds=allAds.filter(a=>String(a.id)!==String(id));saveAdsToStorage();renderAds();loadAdminDashboard();}catch(e){alert('Не удалось удалить объявление.');}
+            const approved = await siteConfirm('Удалить это объявление для всех пользователей? Действие нельзя будет отменить.', { okText: 'Удалить', cancelText: 'Отмена' });
+            if(!approved)return;
+            try{await window.fbDeleteDoc(window.fbDoc(window.firebaseDb,'ads',String(id)));allAds=allAds.filter(a=>String(a.id)!==String(id));saveAdsToStorage();renderAds();loadAdminDashboard();alert('Объявление удалено!');}catch(e){alert('Не удалось удалить объявление.');}
         }
+
+
+        // Красивые уведомления вместо стандартных белых браузерных alert().
+        function showSiteNotification(message, type = 'info') {
+            const stack = document.getElementById('tjworkToastStack');
+            if (!stack) return;
+            const text = String(message || '');
+            let title = 'Сообщение';
+            let icon = 'i';
+            if (/успеш|опубликован|сохранен|изменен|спасибо/i.test(text)) { title = 'Готово'; icon = '✓'; type = 'success'; }
+            else if (/ошибка|не удалось|неверн|нельзя|не найден|заблокирован/i.test(text)) { title = 'Не получилось'; icon = '!'; type = 'error'; }
+            else if (/введ|подтвержд|проверьте/i.test(text)) { title = 'Проверьте данные'; icon = '•'; type = 'warning'; }
+            const toast = document.createElement('div');
+            toast.className = `tjwork-toast ${type}`;
+            toast.innerHTML = `
+                <div class="tjwork-toast-icon">${icon}</div>
+                <div>
+                    <div class="tjwork-toast-title">${escapeHtml(title)}</div>
+                    <div class="tjwork-toast-text">${escapeHtml(text)}</div>
+                </div>
+                <button type="button" class="tjwork-toast-close" aria-label="Закрыть" onclick="this.closest('.tjwork-toast').remove()">×</button>
+            `;
+            stack.appendChild(toast);
+            const timeout = type === 'error' ? 5600 : 3900;
+            setTimeout(() => {
+                if (!toast.isConnected) return;
+                toast.classList.add('tjwork-toast-out');
+                setTimeout(() => toast.remove(), 280);
+            }, timeout);
+        }
+
+        function siteAlert(message) {
+            showSiteNotification(message);
+        }
+        window.alert = siteAlert;
+
+        function siteConfirm(message, options = {}) {
+            const overlay = document.getElementById('tjworkConfirmOverlay');
+            const text = document.getElementById('tjworkConfirmText');
+            const ok = document.getElementById('tjworkConfirmOk');
+            const cancel = document.getElementById('tjworkConfirmCancel');
+            if (!overlay || !text || !ok || !cancel) return Promise.resolve(false);
+            text.textContent = message || 'Подтвердите действие.';
+            ok.textContent = options.okText || 'Удалить';
+            cancel.textContent = options.cancelText || 'Отмена';
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden', 'false');
+            return new Promise(resolve => {
+                let done = false;
+                const finish = value => {
+                    if (done) return;
+                    done = true;
+                    overlay.classList.remove('open');
+                    overlay.setAttribute('aria-hidden', 'true');
+                    ok.onclick = null;
+                    cancel.onclick = null;
+                    overlay.onclick = null;
+                    resolve(value);
+                };
+                ok.onclick = () => finish(true);
+                cancel.onclick = () => finish(false);
+                overlay.onclick = (e) => { if (e.target === overlay) finish(false); };
+            });
+        }
+        window.siteConfirm = siteConfirm;
 
         function toggleLang() {
             const body = document.body;
@@ -2310,5 +2468,19 @@
             setTimeout(() => splash && splash.classList.add('splash-hidden'), 550);
         };
     </script>
+
+    <div id="tjworkToastStack" aria-live="polite" aria-atomic="true"></div>
+    <div id="tjworkConfirmOverlay" aria-hidden="true">
+        <div class="tjwork-confirm" role="dialog" aria-modal="true" aria-labelledby="tjworkConfirmTitle">
+            <div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl mb-4">⚠</div>
+            <h3 id="tjworkConfirmTitle" class="text-lg font-black text-white">Подтверждение</h3>
+            <p id="tjworkConfirmText" class="text-sm text-slate-400 mt-2 leading-6"></p>
+            <div class="tjwork-confirm-actions">
+                <button type="button" class="tjwork-confirm-cancel" id="tjworkConfirmCancel">Отмена</button>
+                <button type="button" class="tjwork-confirm-ok" id="tjworkConfirmOk">Удалить</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
