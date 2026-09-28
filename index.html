@@ -134,6 +134,35 @@
 .contact-social-icon svg { width: 22px; height: 22px; display: block; }
 </style>
 
+<style id="premium-select-design">
+/* Тёмное оформление выпадающих списков, чтобы системное белое меню не выбивалось из дизайна TJWORK. */
+select {
+    color-scheme: dark;
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #1e293b !important;
+}
+select:hover {
+    border-color: rgba(52, 211, 153, .55) !important;
+}
+select:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.12), 0 10px 26px rgba(0,0,0,.18);
+}
+select option, select optgroup {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+select option:checked {
+    background-color: #064e3b !important;
+    color: #ecfdf5 !important;
+}
+/* Системные списки не поддерживают полноценные border-radius, поэтому делаем сам контрол визуально цельным. */
+select {
+    border-radius: 14px !important;
+}
+</style>
+
 <style id="burger-animation">
 /* Профессиональное бургер-меню: раскрывается поверх контента и не двигает страницу. */
 #burgerMenu {
@@ -392,7 +421,17 @@
                 </nav>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <!-- Десктопные быстрые кнопки: также остаются в бургер-меню на мобильных -->
+                <a id="headerChatLink" href="#" onclick="showPage('messages'); return false;" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-200 text-sm font-bold hover:bg-slate-800 hover:border-emerald-500/50 hover:text-emerald-300 transition shadow-sm" aria-label="Чат">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9.6 9.6 0 0 1-4.1-.9L3 21l1.9-4.7A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+                    <span>Чат</span>
+                </a>
+                <a id="headerAdminLink" href="#" onclick="showPage('admin'); return false;" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-400/20 bg-amber-400/5 text-amber-300 text-sm font-bold hover:bg-amber-400/10 hover:border-amber-400/40 transition shadow-sm" aria-label="Админ">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3Z"/><path d="m9.5 12 1.8 1.8 3.7-4"/></svg>
+                    <span>Админ</span>
+                </a>
+
                 <button onclick="toggleLang()" class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 text-slate-200 transition">
                     <span id="langLabel">🇹🇯 Тоҷикӣ</span>
                 </button>
@@ -477,7 +516,7 @@
                     </h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -491,8 +530,16 @@
                         <option value="onsite">🏢 На месте (Дар маҳал)</option>
                     </select>
 
-                    <select id="catSelect" onchange="applyFilters()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                    <select id="sectionSelect" onchange="onSectionChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <option value="">🧩 Все разделы / Ҳама бахшҳо</option>
+                    </select>
+
+                    <select id="catSelect" onchange="onFilterCategoryChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
                         <option value="">📂 Все категории / Ҳама категорияҳо</option>
+                    </select>
+
+                    <select id="subjectSelect" onchange="applyFilters()" class="hidden bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <option value="">📚 Все предметы</option>
                     </select>
                 </div>
 
@@ -547,35 +594,54 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div onclick="openCategoryPage('Сантехника и ремонт')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">🛠 Сантехника и электрика</h3>
-                    <p class="text-sm text-slate-400">Ремонт проводки, кранов, установка сантехники.</p>
+            <div class="bg-[#111827] p-5 rounded-3xl border border-slate-800 shadow-lg">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+                    <div>
+                        <h2 class="text-lg font-black text-white">Все разделы работы</h2>
+                        <p class="text-sm text-slate-400 mt-1">Сначала выберите тип занятости, затем раздел и конкретную категорию.</p>
+                    </div>
+                    <select id="catalogTypeSelect" onchange="renderCatalogSections()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 md:w-56">
+                        <option value="">🌐 Все типы</option>
+                        <option value="remote">💻 Удалённая работа</option>
+                        <option value="onsite">🏢 Работа на месте</option>
+                    </select>
                 </div>
-                <div onclick="openCategoryPage('IT и программирование')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">💻 Программирование и IT</h3>
-                    <p class="text-sm text-slate-400">Создание сайтов, ботов Telegram, баз данных.</p>
-                </div>
-                <div onclick="openCategoryPage('Дизайн и графика')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">🎨 Дизайн и реклама</h3>
-                    <p class="text-sm text-slate-400">Логотипы, брендинг, баннеры для Kwork и соцсетей.</p>
-                </div>
-                <div onclick="openCategoryPage('Строительство')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">🏗 Строительство и ремонт</h3>
-                    <p class="text-sm text-slate-400">Отделка, ремонт квартир, штукатурка.</p>
-                </div>
-                <div onclick="openCategoryPage('Репетиторы и обучение')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">📚 Репетиторы и курсы</h3>
-                    <p class="text-sm text-slate-400">Обучение языкам, математике, программированию.</p>
-                </div>
-                <div onclick="openCategoryPage('Доставка и курьеры')" class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-emerald-500 transition cursor-pointer space-y-2">
-                    <h3 class="font-bold text-lg text-emerald-400">🚚 Доставка и курьеры</h3>
-                    <p class="text-sm text-slate-400">Быстрая доставка посылок и грузов по городам.</p>
-                </div>
+                <div id="catalogSectionsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
         </div>
 
-        <!-- 3. ДЕТАЛЬНАЯ СТРАНИЦА ОТДЕЛЬНОЙ КАТЕГОРИИ -->
+        <!-- 3. ДЕТАЛЬНАЯ СТРАНИЦА РАЗДЕЛА -->
+        <div id="page-section-detail" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <button onclick="showPage('catalog')" class="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700 transition">
+                    ← Назад к разделам
+                </button>
+                <select id="sectionPageTypeSelect" onchange="renderSectionDetailPage()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500">
+                    <option value="">🌐 Все типы</option>
+                    <option value="remote">💻 Удалённо</option>
+                    <option value="onsite">🏢 На месте</option>
+                </select>
+            </div>
+            <div class="bg-[#111827] p-6 rounded-3xl border border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div id="sectionDetailIcon" class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl">🧩</div>
+                    <div>
+                        <h1 id="sectionDetailTitle" class="text-2xl md:text-3xl font-black text-white">Раздел</h1>
+                        <p class="text-sm text-slate-400 mt-1">Выберите направление, чтобы увидеть объявления только этого типа.</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-white mb-3">Категории и направления</h2>
+                <div id="sectionCategoriesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-white mb-3">Объявления в разделе</h2>
+                <div id="sectionDetailAdsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- 4. ДЕТАЛЬНАЯ СТРАНИЦА ОТДЕЛЬНОЙ КАТЕГОРИИ -->
         <div id="page-category-detail" class="hidden space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="showPage('catalog')" class="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700 transition">
@@ -594,7 +660,7 @@
             <div id="catDetailAdsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- 4. USEFUL PAGE -->
+        <!-- 5. USEFUL PAGE -->
         <div id="page-useful" class="hidden space-y-6">
             <h1 class="text-3xl font-black text-white"><span class="lang-ru">Полезные статьи и советы</span><span class="lang-tj">Мақолаҳо ва маслиҳатҳо</span></h1>
             <div class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 space-y-4">
@@ -603,7 +669,7 @@
             </div>
         </div>
 
-        <!-- 5. HELP PAGE -->
+        <!-- 6. HELP PAGE -->
         <div id="page-help" class="hidden space-y-6 max-w-2xl mx-auto">
             <h1 class="text-3xl font-black text-center text-white"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
             <div class="bg-[#111827] p-8 rounded-3xl shadow-lg border border-slate-800 space-y-4">
@@ -1000,10 +1066,10 @@
                 <label class="text-xs font-bold text-slate-400">Тип объявления:</label>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" id="modalModeWorkBtn" onclick="setModalMode('work')" class="py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 transition">
-                        💼 Найти работу
+                        <span class="lang-ru">💼 Найти работу</span><span class="lang-tj">💼 Кор ёфтан</span>
                     </button>
                     <button type="button" id="modalModeWorkerBtn" onclick="setModalMode('worker')" class="py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-900 border border-slate-800 text-slate-300 transition">
-                        🔍 Найти работника
+                        <span class="lang-ru">🔍 Найти работника</span><span class="lang-tj">🔍 Корманд ёфтан</span>
                     </button>
                 </div>
             </div>
@@ -1011,13 +1077,22 @@
             <input type="text" id="newTitle" placeholder="Название (например: Сантехник срочно)" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500">
             <textarea id="newDesc" placeholder="Подробное описание работы..." rows="3" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500"></textarea>
             
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <select id="newType" onchange="onModalTypeChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
                     <option value="remote">Удаленно (Фосилавӣ)</option>
                     <option value="onsite">На месте (Дар маҳал)</option>
                 </select>
 
-                <select id="newCat" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
+                <select id="newSection" onchange="onModalSectionChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
+                    <option value="">🧩 Выберите раздел / сферу</option>
+                </select>
+
+                <select id="newCat" onchange="onModalCategoryChange()" class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none">
+                    <option value="">📂 Выберите категорию</option>
+                </select>
+
+                <select id="newSubject" class="hidden md:col-span-3 col-span-1 bg-slate-900 border border-emerald-500/30 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500">
+                    <option value="">📚 Выберите предмет / Фанро интихоб кунед</option>
                 </select>
             </div>
 
@@ -1159,7 +1234,7 @@
             if (unsubscribeUsers) unsubscribeUsers();
             try {
                 unsubscribeAds = window.fbOnSnapshot(window.fbCollection(window.firebaseDb, 'ads'), snap => {
-                    firestoreAds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    firestoreAds = snap.docs.map(d => ({ id: d.id, ...d.data(), cat: canonicalizeCategory(d.data().cat) }));
                     if (firestoreAds.length) {
                         allAds = firestoreAds;
                         saveAdsToStorage();
@@ -1189,22 +1264,431 @@
             }
         }
         
-        const categoriesData = {
-            remote: [
-                "IT и программирование (сайты, боты)",
-                "Дизайн и графика (логотипы, баннеры)",
-                "Переводы текстов и копирайтинг",
-                "Монтаж видео и анимация",
-                "Удаленное обучение и репетиторство"
-            ],
-            onsite: [
-                "Сантехника и ремонт",
-                "Строительство и отделка",
-                "Электрика и проводка",
-                "Доставка и курьерские услуги",
-                "Уборка и клининг"
-            ]
+        const tajikSchoolSubjects = [
+            "Таджикский язык",
+            "Таджикская литература",
+            "Русский язык",
+            "Русская литература",
+            "Английский язык",
+            "Немецкий язык",
+            "Французский язык",
+            "Математика",
+            "Алгебра",
+            "Геометрия",
+            "Информатика",
+            "Физика",
+            "Химия",
+            "Биология",
+            "География",
+            "История таджикского народа",
+            "Всемирная история",
+            "Основы государства и права",
+            "Человек и общество",
+            "Экономические знания",
+            "Экология",
+            "Астрономия",
+            "Начальная военная подготовка",
+            "Технология",
+            "Изобразительное искусство",
+            "Музыка",
+            "Физическая культура",
+            "Начальные классы",
+            "Дошкольное образование",
+            "Подготовка к экзаменам",
+            "Другой предмет"
+        ];
+
+        // Иерархия: Тип объявления -> Раздел/сфера -> Категория/направление.
+        // Корневые категории сохранены для совместимости со старыми объявлениями.
+        const workSections = {
+            "IT и компьютеры": { icon: "💻", root: "IT, телеком, компьютеры", categories: [
+                "IT, телеком, компьютеры", "Разработка сайтов", "Веб-приложения", "Telegram-боты", "Python", "JavaScript", "C++", "Java", "PHP", "Базы данных", "Системное администрирование", "Настройка ПК", "Ремонт компьютеров", "Сети и Wi-Fi", "Техподдержка", "Тестирование ПО"
+            ]},
+            "Дизайн, маркетинг и реклама": { icon: "🎨", root: "Маркетинг, реклама, дизайн", categories: [
+                "Маркетинг, реклама, дизайн", "Графический дизайн", "Логотипы и брендинг", "UI/UX дизайн", "SMM и социальные сети", "Реклама в соцсетях", "Контекстная реклама", "Презентации", "Обработка фото", "Исследование рынка"
+            ]},
+            "Образование и языки": { icon: "📚", root: "Образование, культура, искусство", categories: [
+                "Образование, культура, искусство", "Учитель", "Репетитор", "Английский язык", "Русский язык", "Таджикский язык", "Математика", "Алгебра и геометрия", "Информатика", "Физика", "Химия", "Биология", "География", "История", "Начальные классы", "Дошкольное образование", "Подготовка к экзаменам"
+            ]},
+            "Строительство и ремонт": { icon: "🛠️", root: "Строительство, недвижимость", categories: [
+                "Строительство, недвижимость", "Сантехника", "Электрика", "Отделка и ремонт", "Кладка и бетон", "Штукатурка", "Малярные работы", "Плитка", "Гипсокартон", "Сварка", "Столярные работы", "Кровля", "Окна и двери", "Кондиционирование"
+            ]},
+            "Транспорт и логистика": { icon: "🚚", root: "Транспорт, логистика, склад", categories: [
+                "Транспорт, логистика, склад", "Водитель", "Такси", "Курьер", "Доставка", "Грузоперевозки", "Склад", "Грузчик", "Диспетчер", "Экспедитор"
+            ]},
+            "Продажи и торговля": { icon: "🛒", root: "Продажи, розничная торговля", categories: [
+                "Продажи, розничная торговля", "Продавец", "Кассир", "Менеджер по продажам", "Интернет-магазин", "Менеджер маркетплейса", "Мерчендайзер", "Оператор колл-центра"
+            ]},
+            "Медицина и фармация": { icon: "🩺", root: "Медицина, фармация", categories: [
+                "Медицина, фармация", "Врач", "Медсестра", "Лаборант", "Фармацевт", "Сиделка и уход", "Стоматология"
+            ]},
+            "Финансы, банки и право": { icon: "💼", root: "Бухгалтерия, финансы, юристы", categories: [
+                "Бухгалтерия, финансы, юристы", "Бухгалтер", "Налоги", "Аудит", "Финансовый специалист", "Банки, страхование, лизинг", "Кредитный специалист", "Юрист", "Юридическая консультация", "Работа с документами"
+            ]},
+            "Офис, HR и управление": { icon: "🏢", root: "Административный персонал", categories: [
+                "Административный персонал", "HR, кадры", "Кадровые агентства", "Офис-менеджер", "Секретарь", "Рекрутер", "Государственные службы", "Руководители", "Ассистент", "Ввод данных"
+            ]},
+            "Рабочие и производство": { icon: "⚙️", root: "Рабочий персонал, разнорабочие", categories: [
+                "Рабочий персонал, разнорабочие", "Производство, энергетика", "Разнорабочий", "Оператор производства", "Мастер цеха", "Монтажник", "Упаковщик", "Сборщик"
+            ]},
+            "Сервис, красота и туризм": { icon: "✨", root: "Красота, фитнес, спорт", categories: [
+                "Домашний персонал, обслуживание", "Уборка", "Няня", "Помощь по дому", "Красота, фитнес, спорт", "Парикмахер", "Визажист", "Маникюр", "Фитнес-тренер", "Рестораны, повара, официанты", "Повар", "Официант", "Туризм, гостиницы, развлечения", "Гид", "Администратор гостиницы"
+            ]},
+            "СМИ и контент": { icon: "🎥", root: "СМИ, издательство", categories: [
+                "СМИ, издательство", "Журналист", "Редактор", "Переводы и копирайтинг", "Копирайтинг", "Переводчик", "Монтаж видео и анимация", "Видеомонтаж", "Анимация", "Фотограф", "Озвучка"
+            ]},
+            "Безопасность и госслужба": { icon: "🛡️", root: "Охрана, безопасность", categories: [
+                "Охрана, безопасность", "Охранник", "Контролёр", "Безопасность объекта", "Государственные службы"
+            ]},
+            "Карьера и занятость": { icon: "📈", root: "Начало карьеры, студенты", categories: [
+                "Начало карьеры, студенты", "Стажировка", "Подработка", "Частичная занятость", "Полная занятость", "Работа за рубежом"
+            ]},
+            "Другое": { icon: "🧩", root: "Другие сферы занятий", categories: [
+                "Другие сферы занятий"
+            ]}
         };
+
+        const unifiedCategories = [...new Set(Object.values(workSections).flatMap(s => s.categories))];
+
+        const categoryToSection = {};
+        Object.entries(workSections).forEach(([sectionName, section]) => {
+            section.categories.forEach(category => { categoryToSection[category] = sectionName; });
+        });
+
+        function getCategorySection(category) {
+            const canonical = canonicalizeCategory(category || "");
+            return categoryToSection[canonical] || "Другое";
+        }
+
+        function getSectionRootCategory(sectionName) {
+            return workSections[sectionName]?.root || "Другие сферы занятий";
+        }
+
+        function getSectionCategories(sectionName) {
+            return workSections[sectionName]?.categories || [];
+        }
+
+        const sectionDescriptions = {
+            "IT и компьютеры": "Сайты, программирование, боты, ПК, сети и техническая поддержка.",
+            "Дизайн, маркетинг и реклама": "Дизайн, брендинг, SMM, реклама и продвижение.",
+            "Образование и языки": "Учителя, репетиторы, языки и подготовка к экзаменам.",
+            "Строительство и ремонт": "Сантехника, электрика, отделка, монтаж и ремонт.",
+            "Транспорт и логистика": "Водители, доставка, курьеры, склады и грузоперевозки.",
+            "Продажи и торговля": "Продажи, магазины, кассы, маркетплейсы и колл-центры.",
+            "Медицина и фармация": "Медицина, фармация, уход и лабораторные направления.",
+            "Финансы, банки и право": "Бухгалтерия, финансы, банки, страхование и юридические услуги.",
+            "Офис, HR и управление": "Администрация, HR, рекрутинг, управление и офисная работа.",
+            "Рабочие и производство": "Производство, монтаж, упаковка, сборка и рабочие специальности.",
+            "Сервис, красота и туризм": "Красота, фитнес, бытовые услуги, рестораны и гостиницы.",
+            "СМИ и контент": "СМИ, тексты, переводы, фото, видео и анимация.",
+            "Безопасность и госслужба": "Охрана, контроль объектов и государственная служба.",
+            "Карьера и занятость": "Старт карьеры, стажировки, подработка и работа за рубежом.",
+            "Другое": "Другие направления, которые не подошли под основные разделы."
+        };
+
+        const categoriesData = {
+            remote: unifiedCategories.slice(),
+            onsite: unifiedCategories.slice()
+        };
+
+
+        // Переводы динамических списков категорий/разделов/предметов.
+        // Значения value остаются русскими для совместимости с существующими объявлениями,
+        // меняется только отображаемый текст при переключении языка.
+        const tjDynamicTranslations = {
+            type: {
+                '': '🌐 Намуд: Ҳама',
+                remote: '💻 Фосилавӣ',
+                onsite: '🏢 Дар маҳал'
+            },
+            section: {
+                'IT и компьютеры': 'IT ва компютерҳо',
+                'Дизайн, маркетинг и реклама': 'Дизайн, маркетинг ва реклама',
+                'Образование и языки': 'Маориф ва забонҳо',
+                'Строительство и ремонт': 'Сохтмон ва таъмир',
+                'Транспорт и логистика': 'Нақлиёт ва логистика',
+                'Продажи и торговля': 'Фурӯш ва савдо',
+                'Медицина и фармация': 'Тиб ва дорусозӣ',
+                'Финансы, банки и право': 'Молия, бонкҳо ва ҳуқуқ',
+                'Офис, HR и управление': 'Идора, HR ва идоракунӣ',
+                'Рабочие и производство': 'Коргарӣ ва истеҳсолот',
+                'Сервис, красота и туризм': 'Хизматрасонӣ, зебоӣ ва сайёҳӣ',
+                'СМИ и контент': 'ВАО ва мундариҷа',
+                'Безопасность и госслужба': 'Амният ва хизмати давлатӣ',
+                'Карьера и занятость': 'Карера ва шуғл',
+                'Другое': 'Дигар'
+            },
+            category: {
+                'IT, телеком, компьютеры': 'IT, телеком ва компютерҳо',
+                'Разработка сайтов': 'Таҳияи сомонаҳо',
+                'Веб-приложения': 'Барномаҳои вебӣ',
+                'Telegram-боты': 'Ботҳои Telegram',
+                'Python': 'Python',
+                'JavaScript': 'JavaScript',
+                'C++': 'C++',
+                'Java': 'Java',
+                'PHP': 'PHP',
+                'Базы данных': 'Пойгоҳҳои додаҳо',
+                'Системное администрирование': 'Идоракунии системаҳо',
+                'Настройка ПК': 'Танзими компютер',
+                'Ремонт компьютеров': 'Таъмири компютерҳо',
+                'Сети и Wi-Fi': 'Шабакаҳо ва Wi-Fi',
+                'Техподдержка': 'Дастгирии техникӣ',
+                'Тестирование ПО': 'Санҷиши нармафзор',
+                'Маркетинг, реклама, дизайн': 'Маркетинг, реклама ва дизайн',
+                'Графический дизайн': 'Дизайни графикӣ',
+                'Логотипы и брендинг': 'Логотипҳо ва брендсозӣ',
+                'UI/UX дизайн': 'Дизайни UI/UX',
+                'SMM и социальные сети': 'SMM ва шабакаҳои иҷтимоӣ',
+                'Реклама в соцсетях': 'Реклама дар шабакаҳои иҷтимоӣ',
+                'Контекстная реклама': 'Рекламаи контекстӣ',
+                'Презентации': 'Презентатсияҳо',
+                'Обработка фото': 'Коркарди аксҳо',
+                'Исследование рынка': 'Тадқиқоти бозор',
+                'Образование, культура, искусство': 'Маориф, фарҳанг ва санъат',
+                'Учитель': 'Омӯзгор',
+                'Репетитор': 'Мураббӣ',
+                'Английский язык': 'Забони англисӣ',
+                'Русский язык': 'Забони русӣ',
+                'Таджикский язык': 'Забони тоҷикӣ',
+                'Математика': 'Математика',
+                'Алгебра и геометрия': 'Алгебра ва геометрия',
+                'Информатика': 'Информатика',
+                'Физика': 'Физика',
+                'Химия': 'Химия',
+                'Биология': 'Биология',
+                'География': 'Ҷуғрофия',
+                'История': 'Таърих',
+                'Начальные классы': 'Синфҳои ибтидоӣ',
+                'Дошкольное образование': 'Таҳсилоти томактабӣ',
+                'Подготовка к экзаменам': 'Омодагӣ ба имтиҳонҳо',
+                'Строительство, недвижимость': 'Сохтмон ва амволи ғайриманқул',
+                'Сантехника': 'Сантехника',
+                'Электрика': 'Барқ ва электрика',
+                'Отделка и ремонт': 'Ороиш ва таъмир',
+                'Кладка и бетон': 'Хиштчинӣ ва бетон',
+                'Штукатурка': 'Штукатурка',
+                'Малярные работы': 'Рангуборӣ',
+                'Плитка': 'Плитка',
+                'Гипсокартон': 'Гипсокартон',
+                'Сварка': 'Кафшергарӣ',
+                'Столярные работы': 'Корҳои дуредгарӣ',
+                'Кровля': 'Боми хона',
+                'Окна и двери': 'Тиреза ва дарҳо',
+                'Кондиционирование': 'Кондитсионерҳо',
+                'Транспорт, логистика, склад': 'Нақлиёт, логистика ва анбор',
+                'Водитель': 'Ронанда',
+                'Такси': 'Таксӣ',
+                'Курьер': 'Курер',
+                'Доставка': 'Расонидан',
+                'Грузоперевозки': 'Боркашонӣ',
+                'Склад': 'Анбор',
+                'Грузчик': 'Борбардор',
+                'Диспетчер': 'Диспетчер',
+                'Экспедитор': 'Экспедитор',
+                'Продажи, розничная торговля': 'Фурӯш ва савдои чакана',
+                'Продавец': 'Фурӯшанда',
+                'Кассир': 'Хазинадор',
+                'Менеджер по продажам': 'Менеҷери фурӯш',
+                'Интернет-магазин': 'Дӯкони интернетӣ',
+                'Менеджер маркетплейса': 'Менеҷери маркетплейс',
+                'Мерчендайзер': 'Мерчендайзер',
+                'Оператор колл-центра': 'Оператори колл-марказ',
+                'Медицина, фармация': 'Тиб ва дорусозӣ',
+                'Врач': 'Духтур',
+                'Медсестра': 'Ҳамшира',
+                'Лаборант': 'Лаборант',
+                'Фармацевт': 'Дорусоз',
+                'Сиделка и уход': 'Нигоҳубин ва парасторӣ',
+                'Стоматология': 'Стоматология',
+                'Бухгалтерия, финансы, юристы': 'Муҳосибӣ, молия ва ҳуқуқшиносӣ',
+                'Бухгалтер': 'Муҳосиб',
+                'Налоги': 'Андозҳо',
+                'Аудит': 'Аудит',
+                'Финансовый специалист': 'Мутахассиси молия',
+                'Банки, страхование, лизинг': 'Бонкҳо, суғурта ва лизинг',
+                'Кредитный специалист': 'Мутахассиси қарз',
+                'Юрист': 'Ҳуқуқшинос',
+                'Юридическая консультация': 'Машварати ҳуқуқӣ',
+                'Работа с документами': 'Кор бо ҳуҷҷатҳо',
+                'Административный персонал': 'Кормандони маъмурӣ',
+                'HR, кадры': 'HR ва кадрҳо',
+                'Кадровые агентства': 'Агентҳои кадрӣ',
+                'Офис-менеджер': 'Менеҷери офис',
+                'Секретарь': 'Котиб',
+                'Рекрутер': 'Рекрутер',
+                'Государственные службы': 'Хадамоти давлатӣ',
+                'Руководители': 'Роҳбарон',
+                'Ассистент': 'Ёрдамчӣ',
+                'Ввод данных': 'Воридкунии додаҳо',
+                'Рабочий персонал, разнорабочие': 'Коргарон ва корҳои гуногун',
+                'Производство, энергетика': 'Истеҳсолот ва энергетика',
+                'Разнорабочий': 'Коргари гуногунсоҳа',
+                'Оператор производства': 'Оператори истеҳсолот',
+                'Мастер цеха': 'Устои сех',
+                'Монтажник': 'Монтажчӣ',
+                'Упаковщик': 'Бастабанд',
+                'Сборщик': 'Ҷамъоваранда',
+                'Домашний персонал, обслуживание': 'Кормандони хонагӣ ва хизматрасонӣ',
+                'Уборка': 'Тозакунӣ',
+                'Няня': 'Парастор',
+                'Помощь по дому': 'Кӯмак дар корҳои хона',
+                'Красота, фитнес, спорт': 'Зебоӣ, фитнес ва варзиш',
+                'Парикмахер': 'Мӯйсартарош',
+                'Визажист': 'Рассоми ороиш',
+                'Маникюр': 'Маникюр',
+                'Фитнес-тренер': 'Мураббии фитнес',
+                'Рестораны, повара, официанты': 'Тарабхонаҳо, ошпазҳо ва пешхизматон',
+                'Повар': 'Ошпаз',
+                'Официант': 'Пешхизмат',
+                'Туризм, гостиницы, развлечения': 'Сайёҳӣ, меҳмонхонаҳо ва фароғат',
+                'Гид': 'Роҳбалад',
+                'Администратор гостиницы': 'Маъмури меҳмонхона',
+                'СМИ, издательство': 'ВАО ва нашриёт',
+                'Журналист': 'Рӯзноманигор',
+                'Редактор': 'Муҳаррир',
+                'Переводы и копирайтинг': 'Тарҷума ва копирайтинг',
+                'Копирайтинг': 'Копирайтинг',
+                'Переводчик': 'Тарҷумон',
+                'Монтаж видео и анимация': 'Таҳрири видео ва аниматсия',
+                'Видеомонтаж': 'Монтажи видео',
+                'Анимация': 'Аниматсия',
+                'Фотограф': 'Суратгир',
+                'Озвучка': 'Овозгузорӣ',
+                'Охрана, безопасность': 'Муҳофизат ва амният',
+                'Охранник': 'Муҳофиз',
+                'Контролёр': 'Назоратчӣ',
+                'Безопасность объекта': 'Амнияти объект',
+                'Начало карьеры, студенты': 'Оғози карера ва донишҷӯён',
+                'Стажировка': 'Таҷрибаомӯзӣ',
+                'Подработка': 'Кори иловагӣ',
+                'Частичная занятость': 'Шуғли нопурра',
+                'Полная занятость': 'Шуғли пурра',
+                'Работа за рубежом': 'Кор дар хориҷ',
+                'Другие сферы занятий': 'Дигар соҳаҳои фаъолият'
+            },
+            subject: {
+                'Таджикский язык': 'Забони тоҷикӣ', 'Таджикская литература': 'Адабиёти тоҷик',
+                'Русский язык': 'Забони русӣ', 'Русская литература': 'Адабиёти рус',
+                'Английский язык': 'Забони англисӣ', 'Немецкий язык': 'Забони олмонӣ',
+                'Французский язык': 'Забони фаронсавӣ', 'Математика': 'Математика',
+                'Алгебра': 'Алгебра', 'Геометрия': 'Геометрия', 'Информатика': 'Информатика',
+                'Физика': 'Физика', 'Химия': 'Химия', 'Биология': 'Биология',
+                'География': 'Ҷуғрофия', 'История таджикского народа': 'Таърихи халқи тоҷик',
+                'Всемирная история': 'Таърихи ҷаҳон', 'Основы государства и права': 'Асосҳои давлат ва ҳуқуқ',
+                'Человек и общество': 'Инсон ва ҷомеа', 'Экономические знания': 'Донишҳои иқтисодӣ',
+                'Экология': 'Экология', 'Астрономия': 'Астрономия',
+                'Начальная военная подготовка': 'Омодагии ибтидоии ҳарбӣ', 'Технология': 'Технология',
+                'Изобразительное искусство': 'Санъати тасвирӣ', 'Музыка': 'Мусиқӣ',
+                'Физическая культура': 'Тарбияи ҷисмонӣ', 'Начальные классы': 'Синфҳои ибтидоӣ',
+                'Дошкольное образование': 'Таҳсилоти томактабӣ', 'Подготовка к экзаменам': 'Омодагӣ ба имтиҳонҳо',
+                'Другой предмет': 'Фанни дигар'
+            }
+        };
+
+        function dynamicText(kind, value) {
+            if (currentLang !== 'tj') return value;
+            return (tjDynamicTranslations[kind] && tjDynamicTranslations[kind][value]) || value;
+        }
+
+        function getWorkTypeLabel(value) {
+            if (currentLang === 'tj') return dynamicText('type', value);
+            if (value === '') return '🌐 Тип: Любой';
+            if (value === 'remote') return '💻 Удаленно (Фосилавӣ)';
+            return '🏢 На месте (Дар маҳал)';
+        }
+
+        function refreshDynamicLanguageControls() {
+            const typeSelect = document.getElementById('typeSelect');
+            const typeValue = typeSelect ? typeSelect.value : '';
+            if (typeSelect) {
+                typeSelect.innerHTML = `
+                    <option value="">${getWorkTypeLabel('')}</option>
+                    <option value="remote">${getWorkTypeLabel('remote')}</option>
+                    <option value="onsite">${getWorkTypeLabel('onsite')}</option>
+                `;
+                typeSelect.value = typeValue;
+            }
+
+            const newType = document.getElementById('newType');
+            if (newType) {
+                const current = newType.value || 'remote';
+                newType.innerHTML = `
+                    <option value="remote">${getWorkTypeLabel('remote')}</option>
+                    <option value="onsite">${getWorkTypeLabel('onsite')}</option>
+                `;
+                newType.value = current;
+            }
+
+            const sectionSelect = document.getElementById('sectionSelect');
+            const sectionValue = sectionSelect ? sectionSelect.value : '';
+            populateSectionSelect('sectionSelect', typeValue, currentLang === 'tj' ? '🧩 Ҳама бахшҳо' : '🧩 Все разделы / Ҳама бахшҳо');
+            if (sectionSelect && sectionValue) sectionSelect.value = sectionValue;
+
+            const newSection = document.getElementById('newSection');
+            const newSectionValue = newSection ? newSection.value : '';
+            populateSectionSelect('newSection', newType ? newType.value : '', currentLang === 'tj' ? '🧩 Бахш ё соҳаро интихоб кунед' : '🧩 Выберите раздел / сферу');
+            if (newSection && newSectionValue) newSection.value = newSectionValue;
+
+            const catSelect = document.getElementById('catSelect');
+            const catValue = catSelect ? catSelect.value : '';
+            populateCategorySelect('catSelect', typeValue, sectionSelect ? sectionSelect.value : '', currentLang === 'tj' ? '📂 Ҳама категорияҳо' : '📂 Все категории / Ҳама категорияҳо');
+            if (catSelect && catValue) catSelect.value = catValue;
+
+            const newCat = document.getElementById('newCat');
+            const newCatValue = newCat ? newCat.value : '';
+            populateCategorySelect('newCat', newType ? newType.value : '', newSection ? newSection.value : '', currentLang === 'tj' ? '📂 Категорияро интихоб кунед' : '📂 Выберите категорию');
+            if (newCat && newCatValue) newCat.value = newCatValue;
+
+            const subject = document.getElementById('subjectSelect');
+            const subjectValue = subject ? subject.value : '';
+            populateSubjectSelect('subjectSelect', currentLang === 'tj' ? '📚 Ҳама фанҳо' : '📚 Все предметы');
+            if (subject && subjectValue) subject.value = subjectValue;
+            updateSubjectFilterVisibility();
+
+            const newSubject = document.getElementById('newSubject');
+            const newSubjectValue = newSubject ? newSubject.value : '';
+            if (newSubject) {
+                populateSubjectSelect('newSubject', currentLang === 'tj' ? '📚 Фанро интихоб кунед' : '📚 Выберите предмет');
+                if (newSubjectValue) newSubject.value = newSubjectValue;
+                onModalCategoryChange();
+            }
+
+            // Каталог разделов и страница раздела используют те же динамические типы.
+            ['catalogTypeSelect', 'sectionPageTypeSelect'].forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                const value = select.value;
+                select.innerHTML = `
+                    <option value="">🌐 ${currentLang === 'tj' ? 'Ҳама намудҳо' : 'Все типы'}</option>
+                    <option value="remote">💻 ${currentLang === 'tj' ? 'Кори фосилавӣ' : 'Удалённая работа'}</option>
+                    <option value="onsite">🏢 ${currentLang === 'tj' ? 'Кор дар маҳал' : 'Работа на месте'}</option>
+                `;
+                select.value = value;
+            });
+        }
+
+        const categoryAliases = {
+            "IT и программирование (сайты, боты)": "IT, телеком, компьютеры",
+            "IT и программирование": "IT, телеком, компьютеры",
+            "Дизайн и графика (логотипы, баннеры)": "Маркетинг, реклама, дизайн",
+            "Дизайн и графика": "Маркетинг, реклама, дизайн",
+            "Доставка и курьерские услуги": "Транспорт, логистика, склад",
+            "Доставка и курьеры": "Транспорт, логистика, склад",
+            "Уборка и клининг": "Домашний персонал, обслуживание",
+            "Сантехника и ремонт": "Строительство, недвижимость",
+            "Сантехника и электрика": "Строительство, недвижимость",
+            "Строительство и отделка": "Строительство, недвижимость",
+            "Строительство": "Строительство, недвижимость",
+            "Электрика и проводка": "Строительство, недвижимость",
+            "Удаленное обучение и репетиторство": "Образование, культура, искусство",
+            "Репетиторы и обучение": "Образование, культура, искусство"
+        };
+
+        function canonicalizeCategory(category) {
+            return categoryAliases[category] || category;
+        }
+
 
         let allAds = JSON.parse(localStorage.getItem('tjwork_ads')) || [
             { id: 1, title: 'Установка смесителя и ремонт труб', desc: 'Нужен опытный мастер в Душанбе для срочного ремонта.', cat: 'Сантехника и ремонт', type: 'onsite', prov: 'Душанбе', dist: 'Сино', vill: 'Гипрозем', price: '150 сомони', ageInfo: 'Возраст: от 20 до 45 лет', phone: '+992 90 123 4567', mode: 'work', authorEmail: 'dovud0300@gmail.com' },
@@ -1216,6 +1700,8 @@
         ];
 
         let userProfilesData = JSON.parse(localStorage.getItem('tjwork_user_profiles')) || {};
+        allAds = allAds.map(ad => ({ ...ad, cat: canonicalizeCategory(ad.cat), section: ad.section || getCategorySection(ad.cat) }));
+        saveAdsToStorage();
 
         function saveAdsToStorage() {
             localStorage.setItem('tjwork_ads', JSON.stringify(allAds));
@@ -1375,20 +1861,28 @@
                 `;
                 const burgerChatLink = document.getElementById('burgerChatLink');
                 const burgerAdminLink = document.getElementById('burgerAdminLink');
+                const headerChatLink = document.getElementById('headerChatLink');
+                const headerAdminLink = document.getElementById('headerAdminLink');
                 if (burgerChatLink) burgerChatLink.classList.remove('hidden');
+                if (headerChatLink) headerChatLink.classList.remove('hidden');
                 // Страница админа доступна всем, а права управления проверяются внутри самой страницы.
                 if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
+                if (headerAdminLink) headerAdminLink.classList.remove('hidden');
             } else {
                 container.innerHTML = `
-                    <button onclick="openAuthModal()" id="mainAuthNavBtn" class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
+                    <button onclick="openAuthModal()"  class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
                         <span class="lang-ru">Вход</span><span class="lang-tj">Ворид шудан</span>
                     </button>
                 `;
                 const burgerChatLink = document.getElementById('burgerChatLink');
                 const burgerAdminLink = document.getElementById('burgerAdminLink');
+                const headerChatLink = document.getElementById('headerChatLink');
+                const headerAdminLink = document.getElementById('headerAdminLink');
                 if (burgerChatLink) burgerChatLink.classList.add('hidden');
+                if (headerChatLink) headerChatLink.classList.add('hidden');
                 // Админку можно просматривать без регистрации.
                 if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
+                if (headerAdminLink) headerAdminLink.classList.remove('hidden');
             }
         }
 
@@ -1893,7 +2387,7 @@
                 const usersSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'users'));
                 firestoreUsers=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
                 const adsSnap=await window.fbGetDocs(window.fbCollection(window.firebaseDb,'ads'));
-                firestoreAds=adsSnap.docs.map(d=>({id:d.id,...d.data()}));
+                firestoreAds=adsSnap.docs.map(d=>({id:d.id,...d.data(),cat:canonicalizeCategory(d.data().cat)}));
                 renderAdminStats(); renderAdminUsers(); renderAdminAds();
                 await renderAdminPublicProfile();
             } catch(e) { console.error(e); alert('Админка подключена, но Firestore не разрешил чтение данных. Проверьте Rules.'); }
@@ -2025,10 +2519,19 @@
                 body.classList.add('lang-ru-active');
                 document.getElementById('langLabel').innerText = '🇹🇯 Тоҷикӣ';
             }
+            refreshDynamicLanguageControls();
+            if (typeof renderAds === 'function') renderAds();
+            if (typeof renderCatalogSections === 'function') renderCatalogSections();
+            if (typeof renderSectionDetailPage === 'function' && activeSectionPageName) renderSectionDetailPage();
+            if (typeof renderCategoryDetailAds === 'function' && activeCategoryPageName) {
+                const catTitle = document.getElementById('catDetailTitle');
+                if (catTitle) catTitle.innerText = dynamicText('category', activeCategoryPageName);
+                renderCategoryDetailAds();
+            }
         }
 
         function showPage(pageId) {
-            ['home', 'catalog', 'page-category-detail', 'useful', 'help', 'profile', 'messages', 'admin'].forEach(p => {
+            ['home', 'catalog', 'page-section-detail', 'page-category-detail', 'useful', 'help', 'profile', 'messages', 'admin'].forEach(p => {
                 const el = document.getElementById('page-' + p);
                 if (el) el.classList.add('hidden');
             });
@@ -2064,9 +2567,85 @@
             window.scrollTo(0, 0);
         }
 
+        let activeSectionPageName = '';
+
+        function getSectionListByType(typeVal = '') {
+            const source = typeVal ? (categoriesData[typeVal] || []) : unifiedCategories;
+            const allowed = new Set(source.map(canonicalizeCategory));
+            return Object.keys(workSections).filter(section => workSections[section].categories.some(c => allowed.has(canonicalizeCategory(c))));
+        }
+
+        function renderCatalogSections() {
+            const grid = document.getElementById('catalogSectionsGrid');
+            if (!grid) return;
+            const typeVal = document.getElementById('catalogTypeSelect')?.value || '';
+            const sections = getSectionListByType(typeVal);
+            grid.innerHTML = sections.map(section => {
+                const info = workSections[section];
+                const adCount = allAds.filter(ad => (!typeVal || ad.type === typeVal) && getCategorySection(ad.cat) === section).length;
+                return `<button type="button" onclick="openSectionPage('${escapeAttr(section)}','${escapeAttr(typeVal)}')" class="text-left bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 transition group shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl group-hover:scale-105 transition">${info.icon}</div>
+                        <span class="text-xs text-slate-500">${adCount} объявл.</span>
+                    </div>
+                    <h3 class="font-black text-lg text-white mt-4 group-hover:text-emerald-400 transition">${escapeHtml(dynamicText('section', section))}</h3>
+                    <p class="text-sm text-slate-400 mt-1 leading-5">${escapeHtml(sectionDescriptions[section] || '')}</p>
+                </button>`;
+            }).join('');
+        }
+
+        function openSectionPage(sectionName, typeVal = '') {
+            activeSectionPageName = sectionName;
+            const select = document.getElementById('sectionPageTypeSelect');
+            if (select) select.value = typeVal || '';
+            showPage('page-section-detail');
+            renderSectionDetailPage();
+        }
+
+        function renderSectionDetailPage() {
+            const title = document.getElementById('sectionDetailTitle');
+            const icon = document.getElementById('sectionDetailIcon');
+            const catGrid = document.getElementById('sectionCategoriesGrid');
+            const adsGrid = document.getElementById('sectionDetailAdsList');
+            if (!title || !catGrid || !adsGrid || !workSections[activeSectionPageName]) return;
+            const sectionInfo = workSections[activeSectionPageName];
+            const typeVal = document.getElementById('sectionPageTypeSelect')?.value || '';
+            title.textContent = dynamicText('section', activeSectionPageName);
+            icon.textContent = sectionInfo.icon;
+
+            const allowedCats = getSectionCategories(activeSectionPageName);
+            catGrid.innerHTML = allowedCats.map(category => {
+                const catCanonical = canonicalizeCategory(category);
+                const rootCanonical = canonicalizeCategory(sectionInfo.root);
+                const count = allAds.filter(ad => getCategorySection(ad.cat) === activeSectionPageName && (!typeVal || ad.type === typeVal) && (catCanonical === canonicalizeCategory(ad.cat) || catCanonical === rootCanonical)).length;
+                return `<button type="button" onclick="openCategoryPage('${escapeAttr(category)}')" class="text-left bg-[#111827] border border-slate-800 hover:border-emerald-500/40 rounded-xl p-4 transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-white">${escapeHtml(dynamicText('category', category))}</span>
+                        <span class="text-xs text-slate-500">${count}</span>
+                    </div>
+                    ${category === 'Учитель' ? `<div class="text-xs text-sky-300 mt-1">${currentLang === 'tj' ? 'Интихоби фан ҳангоми нашри эълон дастрас аст' : 'Выбор предмета доступен при публикации'}</div>` : ''}
+                </button>`;
+            }).join('');
+
+            const matched = allAds.filter(ad => getCategorySection(ad.cat) === activeSectionPageName && (!typeVal || ad.type === typeVal));
+            if (!matched.length) {
+                adsGrid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500">В этом разделе пока нет объявлений.</div>';
+                return;
+            }
+            adsGrid.innerHTML = matched.map(ad => {
+                const adCat = canonicalizeCategory(ad.cat);
+                return `<div class="bg-[#111827] p-5 rounded-2xl shadow-lg border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
+                    <div><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">${escapeHtml(dynamicText('category', adCat))}</span>${ad.subject ? `<span class="inline-flex ml-2 bg-sky-500/10 text-sky-300 border border-sky-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">📚 ${escapeHtml(ad.subject)}</span>` : ''}<h4 class="font-bold text-lg mt-3 text-white">${escapeHtml(ad.title || 'Без названия')}</h4><p class="text-sm text-slate-400 mt-1">${escapeHtml(ad.desc || '')}</p></div>
+                    <div class="space-y-1 text-xs text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80"><div>👤 <b>${escapeHtml(ad.ageInfo || '')}</b></div><div>📞 Контакт: <a href="tel:${escapeAttr(ad.phone || '')}" class="text-emerald-400 font-bold hover:underline">${escapeHtml(ad.phone || 'Не указан')}</a></div></div>
+                    <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-3"><span class="text-amber-400 font-extrabold text-base">${escapeHtml(ad.price || '')}</span><div class="flex items-center gap-2"><span class="text-xs text-slate-500 text-right">${escapeHtml(ad.prov || '')}${ad.dist ? ', ' + escapeHtml(ad.dist) : ''} ${ad.type === 'remote' ? '🌐 Удаленно' : '🏢 На месте'}</span>${renderAdChatButton(ad)}</div></div>
+                </div>`;
+            }).join('');
+        }
+
         function openCategoryPage(categoryName) {
+            categoryName = canonicalizeCategory(categoryName);
             activeCategoryPageName = categoryName;
-            document.getElementById('catDetailTitle').innerText = categoryName;
+            document.getElementById('catDetailTitle').innerText = dynamicText('category', categoryName);
             showPage('page-category-detail');
             renderCategoryDetailAds();
         }
@@ -2076,7 +2655,14 @@
             if (!container) return;
             container.innerHTML = '';
 
-            let matched = allAds.filter(ad => ad.cat.toLowerCase().includes(activeCategoryPageName.toLowerCase()) || activeCategoryPageName.toLowerCase().includes(ad.cat.toLowerCase()));
+            const selectedRootSection = getCategorySection(activeCategoryPageName);
+            const selectedCanonical = canonicalizeCategory(activeCategoryPageName);
+            const selectedIsRoot = selectedCanonical === canonicalizeCategory(getSectionRootCategory(selectedRootSection));
+            let matched = allAds.filter(ad => {
+                const adCanonical = canonicalizeCategory(ad.cat);
+                if (selectedIsRoot) return getCategorySection(adCanonical) === selectedRootSection;
+                return adCanonical === selectedCanonical;
+            });
 
             if (matched.length === 0) {
                 container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500">В этой категории пока нет объявлений. Нажмите «Добавить объявление сюда», чтобы разместить первое!</div>`;
@@ -2087,7 +2673,8 @@
                 container.innerHTML += `
                     <div class="bg-[#111827] p-5 rounded-2xl shadow-lg border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
                         <div>
-                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">${ad.cat}</span>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">${canonicalizeCategory(ad.cat)}</span>
+                            ${ad.cat === 'Учитель' && ad.subject ? `<div class="inline-flex ml-2 bg-sky-500/10 text-sky-300 border border-sky-500/20 text-xs font-bold px-2.5 py-1 rounded-lg">📚 ${ad.subject}</div>` : ''}
                             <h4 class="font-bold text-lg mt-3 text-white">${ad.title}</h4>
                             <p class="text-sm text-slate-400 mt-1">${ad.desc}</p>
                         </div>
@@ -2178,34 +2765,126 @@
             }
         }
 
+        function populateSubjectSelect(selectId, placeholderText = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const fallbackPlaceholder = selectId === 'subjectSelect'
+                ? (currentLang === 'tj' ? '📚 Ҳама фанҳо' : '📚 Все предметы')
+                : (currentLang === 'tj' ? '📚 Фанро интихоб кунед' : '📚 Выберите предмет');
+            select.innerHTML = `<option value="">${placeholderText || fallbackPlaceholder}</option>`;
+            tajikSchoolSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = dynamicText('subject', subject);
+                select.appendChild(option);
+            });
+        }
+
+        function updateSubjectFilterVisibility() {
+            const catSelect = document.getElementById('catSelect');
+            const subjectSelect = document.getElementById('subjectSelect');
+            if (!catSelect || !subjectSelect) return;
+            const isTeacher = catSelect.value === 'Учитель';
+            subjectSelect.classList.toggle('hidden', !isTeacher);
+            if (!isTeacher) subjectSelect.value = '';
+        }
+
+        function populateSectionSelect(selectId, typeVal = '', placeholderText = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const current = select.value;
+            const sections = getSectionListByType(typeVal);
+            const fallbackPlaceholder = currentLang === 'tj' ? '🧩 Ҳама бахшҳо' : '🧩 Все разделы / Ҳама бахшҳо';
+            select.innerHTML = `<option value="">${placeholderText || fallbackPlaceholder}</option>`;
+            sections.forEach(section => {
+                const option = document.createElement('option');
+                option.value = section;
+                option.textContent = `${workSections[section].icon} ${dynamicText('section', section)}`;
+                select.appendChild(option);
+            });
+            if (sections.includes(current)) select.value = current;
+        }
+
+        function populateCategorySelect(selectId, typeVal = '', sectionName = '', placeholderText = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const source = typeVal ? (categoriesData[typeVal] || []) : unifiedCategories;
+            let categories;
+            if (sectionName && workSections[sectionName]) {
+                // Внутри раздела показываем все направления этого раздела.
+                categories = getSectionCategories(sectionName).slice();
+            } else {
+                categories = [...new Set(source.map(canonicalizeCategory))];
+            }
+            const fallbackPlaceholder = currentLang === 'tj' ? '📂 Ҳама категорияҳо' : '📂 Все категории / Ҳама категорияҳо';
+            select.innerHTML = `<option value="">${placeholderText || fallbackPlaceholder}</option>`;
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = dynamicText('category', category);
+                select.appendChild(option);
+            });
+        }
+
+
+        function updateSubjectFilterVisibility() {
+            const catSelect = document.getElementById('catSelect');
+            const subjectSelect = document.getElementById('subjectSelect');
+            if (!catSelect || !subjectSelect) return;
+            const isTeacher = catSelect.value === 'Учитель';
+            subjectSelect.classList.toggle('hidden', !isTeacher);
+            if (!isTeacher) subjectSelect.value = '';
+        }
+
+        function onSectionChange() {
+            const typeVal = document.getElementById('typeSelect')?.value || '';
+            const sectionVal = document.getElementById('sectionSelect')?.value || '';
+            populateCategorySelect('catSelect', typeVal, sectionVal);
+            updateSubjectFilterVisibility();
+            applyFilters();
+        }
+
+        function onFilterCategoryChange() {
+            updateSubjectFilterVisibility();
+            applyFilters();
+        }
+
+        function onModalSectionChange() {
+            const typeVal = document.getElementById('newType')?.value || '';
+            const sectionVal = document.getElementById('newSection')?.value || '';
+            populateCategorySelect('newCat', typeVal, sectionVal, "📂 Выберите категорию / направление");
+            onModalCategoryChange();
+        }
+
+        function onModalCategoryChange() {
+            const cat = document.getElementById('newCat').value;
+            const subjectSelect = document.getElementById('newSubject');
+            if (!subjectSelect) return;
+            const isTeacher = cat === 'Учитель';
+            subjectSelect.classList.toggle('hidden', !isTeacher);
+            if (isTeacher) {
+                populateSubjectSelect('newSubject');
+            } else {
+                subjectSelect.value = '';
+            }
+        }
+
         function onTypeChange() {
             const typeVal = document.getElementById('typeSelect').value;
-            const catSelect = document.getElementById('catSelect');
-            catSelect.innerHTML = '<option value="">📂 Все категории / Ҳама категорияҳо</option>';
-            
-            let listToUse = [];
-            if (typeVal === 'remote') {
-                listToUse = categoriesData.remote;
-            } else if (typeVal === 'onsite') {
-                listToUse = categoriesData.onsite;
-            } else {
-                listToUse = [...categoriesData.remote, ...categoriesData.onsite];
-            }
-
-            listToUse.forEach(cat => {
-                catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-            });
-
+            const sectionSelect = document.getElementById('sectionSelect');
+            populateSectionSelect('sectionSelect', typeVal);
+            if (sectionSelect) sectionSelect.value = '';
+            populateCategorySelect('catSelect', typeVal, '');
+            populateSubjectSelect('subjectSelect', '📚 Все предметы');
+            updateSubjectFilterVisibility();
             applyFilters();
         }
 
         function onModalTypeChange() {
             const typeVal = document.getElementById('newType').value;
-            const newCat = document.getElementById('newCat');
-            newCat.innerHTML = '';
-            categoriesData[typeVal].forEach(cat => {
-                newCat.innerHTML += `<option value="${cat}">${cat}</option>`;
-            });
+            const sectionSelect = document.getElementById('newSection');
+            populateSectionSelect('newSection', typeVal, "🧩 Выберите раздел / сферу");
+            onModalSectionChange();
         }
 
         const regionsData = {
@@ -2329,6 +3008,9 @@
 
         function openCreateModal() {
             document.getElementById('createModal').classList.remove('hidden');
+            document.getElementById('newType').value = 'remote';
+            document.getElementById('newSection').value = '';
+            document.getElementById('newCat').value = '';
             onModalTypeChange();
             renderAgeFields();
         }
@@ -2340,7 +3022,9 @@
             const title = document.getElementById('newTitle').value;
             const desc = document.getElementById('newDesc').value;
             const type = document.getElementById('newType').value;
+            const section = document.getElementById('newSection').value;
             const cat = document.getElementById('newCat').value;
+            const subject = document.getElementById('newSubject') ? document.getElementById('newSubject').value : '';
             const prov = document.getElementById('modalProv').value;
             const dist = document.getElementById('modalDist').value;
             const vill = document.getElementById('modalVill').value;
@@ -2350,8 +3034,14 @@
             const errBox = document.getElementById('createError');
             errBox.classList.add('hidden');
 
-            if (!title || !desc || !priceNum || !phone) {
+            if (!title || !desc || !priceNum || !phone || !section || !cat) {
                 errBox.innerText = 'Пожалуйста, заполните обязательные поля!';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            if (cat === 'Учитель' && !subject) {
+                errBox.innerText = 'Выберите предмет, который вы преподаёте.';
                 errBox.classList.remove('hidden');
                 return;
             }
@@ -2372,7 +3062,9 @@
                 id: Date.now(),
                 title,
                 desc,
+                section,
                 cat,
+                subject: cat === 'Учитель' ? subject : '',
                 type,
                 prov,
                 dist,
@@ -2412,7 +3104,9 @@
 
             const searchTxt = document.getElementById('searchInput').value.toLowerCase();
             const typeVal = document.getElementById('typeSelect').value;
+            const sectionVal = document.getElementById('sectionSelect')?.value || '';
             const catVal = document.getElementById('catSelect').value;
+            const subjectVal = document.getElementById('subjectSelect')?.value || '';
             const provVal = document.getElementById('regionProv').value;
             const distVal = document.getElementById('regionDist').value;
             const villVal = document.getElementById('regionVill').value;
@@ -2420,7 +3114,18 @@
             let filtered = allAds.filter(ad => {
                 if (ad.mode !== currentMode) return false;
                 if (typeVal && ad.type !== typeVal) return false;
-                if (catVal && ad.cat !== catVal) return false;
+                const adCategory = canonicalizeCategory(ad.cat);
+                const adSection = ad.section || getCategorySection(adCategory);
+                if (sectionVal && adSection !== sectionVal) return false;
+                if (catVal) {
+                    const catCanonical = canonicalizeCategory(catVal);
+                    const root = getSectionRootCategory(sectionVal || adSection);
+                    const isRootSelection = catCanonical === canonicalizeCategory(root);
+                    if (isRootSelection) {
+                        if (sectionVal && adSection !== sectionVal) return false;
+                    } else if (adCategory !== catCanonical) return false;
+                }
+                if (subjectVal && adCategory === 'Учитель' && ad.subject !== subjectVal) return false;
                 if (provVal && ad.prov !== provVal) return false;
                 if (distVal && ad.dist !== distVal) return false;
                 if (villVal && ad.vill !== villVal) return false;
@@ -2464,6 +3169,7 @@
         window.onload = function() {
             onTypeChange();
             renderAds();
+            renderCatalogSections();
             const splash = document.getElementById('tjworkSplash');
             setTimeout(() => splash && splash.classList.add('splash-hidden'), 550);
         };
