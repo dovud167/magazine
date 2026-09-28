@@ -163,6 +163,66 @@ select {
 }
 </style>
 
+<style id="responsive-device-layout">
+/* Адаптивность: телефон/планшет используют бургер, ноутбук/ПК — быстрые кнопки в хедере. */
+.desktop-header-action { display: none !important; }
+.desktop-header-action.visible { display: none !important; }
+.mobile-burger-action { display: none !important; }
+.mobile-burger-action.visible { display: none !important; }
+
+@media (min-width: 1024px) {
+    .desktop-header-action.visible {
+        display: inline-flex !important;
+    }
+    .mobile-burger-action {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .desktop-header-action {
+        display: none !important;
+    }
+    .mobile-burger-action.visible {
+        display: flex !important;
+    }
+}
+
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img, video, canvas, svg {
+    max-width: 100%;
+}
+
+@media (max-width: 1023px) {
+    header .max-w-7xl {
+        min-height: 64px;
+        height: auto;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    header .max-w-7xl > div:last-child {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    main#mainContent {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #burgerMenu {
+        width: min(92vw, 380px);
+    }
+}
+</style>
+
 <style id="burger-animation">
 /* Профессиональное бургер-меню: раскрывается поверх контента и не двигает страницу. */
 #burgerMenu {
@@ -423,11 +483,11 @@ select {
 
             <div class="flex items-center gap-3">
                 <!-- Десктопные быстрые кнопки: также остаются в бургер-меню на мобильных -->
-                <a id="headerChatLink" href="#" onclick="showPage('messages'); return false;" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-200 text-sm font-bold hover:bg-slate-800 hover:border-emerald-500/50 hover:text-emerald-300 transition shadow-sm" aria-label="Чат">
+                <a id="headerChatLink" href="#" onclick="showPage('messages'); return false;" class="desktop-header-action items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-200 text-sm font-bold hover:bg-slate-800 hover:border-emerald-500/50 hover:text-emerald-300 transition shadow-sm" aria-label="Чат">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9.6 9.6 0 0 1-4.1-.9L3 21l1.9-4.7A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
                     <span>Чат</span>
                 </a>
-                <a id="headerAdminLink" href="#" onclick="showPage('admin'); return false;" class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-400/20 bg-amber-400/5 text-amber-300 text-sm font-bold hover:bg-amber-400/10 hover:border-amber-400/40 transition shadow-sm" aria-label="Админ">
+                <a id="headerAdminLink" href="#" onclick="showPage('admin'); return false;" class="desktop-header-action visible items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-400/20 bg-amber-400/5 text-amber-300 text-sm font-bold hover:bg-amber-400/10 hover:border-amber-400/40 transition shadow-sm" aria-label="Админ">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3Z"/><path d="m9.5 12 1.8 1.8 3.7-4"/></svg>
                     <span>Админ</span>
                 </a>
@@ -456,8 +516,8 @@ select {
             <a href="#" onclick="showPage('catalog'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
             <a href="#" onclick="showPage('useful'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
             <a href="#" onclick="showPage('help'); toggleBurger();" class="burger-item block font-medium py-1 text-slate-300"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
-            <a id="burgerChatLink" href="#" onclick="showPage('messages'); toggleBurger();" class="burger-item hidden font-medium py-1 text-slate-300"><span class="lang-ru">Чат</span><span class="lang-tj">Чат</span></a>
-            <a id="burgerAdminLink" href="#" onclick="showPage('admin'); toggleBurger();" class="burger-item font-medium py-1 text-amber-400"><span class="lang-ru">Админ</span><span class="lang-tj">Админ</span></a>
+            <a id="burgerChatLink" href="#" onclick="showPage('messages'); toggleBurger();" class="burger-item mobile-burger-action font-medium py-1 text-slate-300"><span class="lang-ru">Чат</span><span class="lang-tj">Чат</span></a>
+            <a id="burgerAdminLink" href="#" onclick="showPage('admin'); toggleBurger();" class="burger-item mobile-burger-action visible font-medium py-1 text-amber-400"><span class="lang-ru">Админ</span><span class="lang-tj">Админ</span></a>
         </div>
     </header>
 
@@ -1916,11 +1976,11 @@ select {
                 const burgerAdminLink = document.getElementById('burgerAdminLink');
                 const headerChatLink = document.getElementById('headerChatLink');
                 const headerAdminLink = document.getElementById('headerAdminLink');
-                if (burgerChatLink) burgerChatLink.classList.remove('hidden');
-                if (headerChatLink) headerChatLink.classList.remove('hidden');
+                if (burgerChatLink) burgerChatLink.classList.add('visible');
+                if (headerChatLink) headerChatLink.classList.add('visible');
                 // Страница админа доступна всем, а права управления проверяются внутри самой страницы.
-                if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
-                if (headerAdminLink) headerAdminLink.classList.remove('hidden');
+                if (burgerAdminLink) burgerAdminLink.classList.add('visible');
+                if (headerAdminLink) headerAdminLink.classList.add('visible');
             } else {
                 container.innerHTML = `
                     <button onclick="openAuthModal()"  class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm">
@@ -1931,11 +1991,11 @@ select {
                 const burgerAdminLink = document.getElementById('burgerAdminLink');
                 const headerChatLink = document.getElementById('headerChatLink');
                 const headerAdminLink = document.getElementById('headerAdminLink');
-                if (burgerChatLink) burgerChatLink.classList.add('hidden');
-                if (headerChatLink) headerChatLink.classList.add('hidden');
+                if (burgerChatLink) burgerChatLink.classList.remove('visible');
+                if (headerChatLink) headerChatLink.classList.remove('visible');
                 // Админку можно просматривать без регистрации.
-                if (burgerAdminLink) burgerAdminLink.classList.remove('hidden');
-                if (headerAdminLink) headerAdminLink.classList.remove('hidden');
+                if (burgerAdminLink) burgerAdminLink.classList.add('visible');
+                if (headerAdminLink) headerAdminLink.classList.add('visible');
             }
         }
 
