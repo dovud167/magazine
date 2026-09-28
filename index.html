@@ -945,13 +945,20 @@ select {
 
                 <!-- Поля для Телефона -->
                 <div id="phoneAuthFields" class="space-y-3 hidden">
-                    <input type="text" id="authPhoneInput" placeholder="+992 00 000 0000" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
-                    <div id="recaptcha-container"></div>
-                    <button onclick="sendPhoneVerificationCode()" class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition">Получить код из СМС</button>
+                    <label for="authPhoneInput" class="block text-xs font-bold text-slate-400">
+                        <span class="lang-ru">Номер телефона</span><span class="lang-tj">Рақами телефон</span>
+                    </label>
+                    <input type="tel" id="authPhoneInput" autocomplete="tel" inputmode="tel" placeholder="+992 00 000 0000" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                    <div id="recaptcha-container" class="min-h-0"></div>
+                    <button onclick="sendPhoneVerificationCode()" class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition">
+                        <span class="lang-ru">Получить код из СМС</span><span class="lang-tj">Гирифтани рамз тавассути SMS</span>
+                    </button>
                     
                     <div id="smsCodeContainer" class="space-y-2 hidden pt-2">
-                        <input type="text" id="authSmsCode" placeholder="Введите 6-значный код из СМС" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
-                        <button onclick="verifyPhoneCode()" class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-amber-400 transition">Подтвердить код</button>
+                        <input type="text" id="authSmsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Введите 6-значный код из СМС" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                        <button onclick="verifyPhoneCode()" class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-amber-400 transition">
+                            <span class="lang-ru">Подтвердить код</span><span class="lang-tj">Тасдиқ кардани рамз</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1779,54 +1786,100 @@ select {
         }
 
         // Авторизация по номеру телефона через Firebase
+        function normalizePhoneNumber(value) {
+            return (value || '').trim().replace(/[\s()\-]/g, '');
+        }
+
+        function resetPhoneRecaptcha() {
+            try {
+                if (window.recaptchaVerifier) {
+                    window.recaptchaVerifier.clear();
+                }
+            } catch (_) {}
+            window.recaptchaVerifier = null;
+            window.confirmationResultObj = null;
+            const smsBox = document.getElementById('smsCodeContainer');
+            if (smsBox) smsBox.classList.add('hidden');
+        }
+
         function sendPhoneVerificationCode() {
-            const phoneNumber = document.getElementById('authPhoneInput').value;
+            const phoneNumber = normalizePhoneNumber(document.getElementById('authPhoneInput').value);
             const errBox = document.getElementById('authError');
             errBox.classList.add('hidden');
 
             if (!phoneNumber) {
-                errBox.innerText = 'Введите номер телефона!';
+                errBox.innerText = currentLang === 'tj' ? 'Рақами телефонро ворид кунед.' : 'Введите номер телефона.';
                 errBox.classList.remove('hidden');
                 return;
             }
 
-            // Инициализация reCAPTCHA для Firebase Phone Auth
+            if (!/^\+[1-9]\d{7,14}$/.test(phoneNumber)) {
+                errBox.innerText = currentLang === 'tj' ? 'Рақамро бо формати байналмилалӣ ворид кунед, масалан +992901234567.' : 'Введите номер в международном формате, например +992901234567.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const auth = window.firebaseAuth;
+            if (!auth || !window.RecaptchaVerifier || !window.signInWithPhoneNumber) {
+                errBox.innerText = currentLang === 'tj' ? 'Воридшавӣ тавассути телефон дар Firebase фаъол карда нашудааст.' : 'Вход по телефону не настроен в Firebase.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
             try {
+                // Инициализация reCAPTCHA для Firebase Phone Auth
                 if (!window.recaptchaVerifier) {
-                    window.recaptchaVerifier = new window.RecaptchaVerifier(window.firebaseAuth, 'recaptcha-container', {
-                        'size': 'invisible'
+                    window.recaptchaVerifier = new window.RecaptchaVerifier(auth, 'recaptcha-container', {
+                        size: 'invisible',
+                        callback: () => {},
+                        'expired-callback': () => {
+                            resetPhoneRecaptcha();
+                        }
                     });
                 }
-                const appVerifier = window.recaptchaVerifier;
-                window.signInWithPhoneNumber(window.firebaseAuth, phoneNumber, appVerifier)
+
+                window.signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
                     .then((confirmationResult) => {
                         window.confirmationResultObj = confirmationResult;
                         document.getElementById('smsCodeContainer').classList.remove('hidden');
-                        alert('СМС с кодом отправлена на ваш телефон!');
-                    }).catch((error) => {
-                        errBox.innerText = 'Ошибка отправки СМС: ' + error.message;
+                        errBox.innerText = currentLang === 'tj' ? 'SMS бо рамзи тасдиқ фиристода шуд.' : 'СМС с кодом подтверждения отправлено.';
+                        errBox.className = 'text-emerald-400 text-xs text-center';
+                        errBox.classList.remove('hidden');
+                    })
+                    .catch((error) => {
+                        resetPhoneRecaptcha();
+                        errBox.className = 'text-red-400 text-xs text-center';
+                        if (error && error.code === 'auth/operation-not-allowed') {
+                            errBox.innerText = currentLang === 'tj' ? 'Воридшавӣ тавассути рақами телефон дар Firebase фаъол нест. Authentication → Sign-in method → Phone-ро фаъол кунед.' : 'Вход по телефону отключён в Firebase. Откройте Authentication → Sign-in method → Phone и включите его.';
+                        } else {
+                            errBox.innerText = (currentLang === 'tj' ? 'Хатои фиристодани SMS: ' : 'Ошибка отправки СМС: ') + (error?.message || 'Неизвестная ошибка');
+                        }
                         errBox.classList.remove('hidden');
                     });
             } catch (e) {
-                errBox.innerText = 'Ошибка reCAPTCHA: ' + e.message;
+                resetPhoneRecaptcha();
+                errBox.className = 'text-red-400 text-xs text-center';
+                errBox.innerText = (currentLang === 'tj' ? 'Хатои reCAPTCHA: ' : 'Ошибка reCAPTCHA: ') + (e?.message || e);
                 errBox.classList.remove('hidden');
             }
         }
 
         async function verifyPhoneCode() {
-            const code = document.getElementById('authSmsCode').value;
+            const code = document.getElementById('authSmsCode').value.trim();
             const errBox = document.getElementById('authError');
-            if (!code || !window.confirmationResultObj) {
-                errBox.innerText = 'Введите код подтверждения!';
+            errBox.className = 'text-red-400 text-xs text-center';
+            if (!/^\d{6}$/.test(code) || !window.confirmationResultObj) {
+                errBox.innerText = currentLang === 'tj' ? 'Рамзи 6-рақамаро ворид кунед.' : 'Введите 6-значный код подтверждения.';
                 errBox.classList.remove('hidden');
                 return;
             }
 
             try {
                 await window.confirmationResultObj.confirm(code);
+                window.confirmationResultObj = null;
                 onAuthSuccessful();
             } catch (error) {
-                errBox.innerText = 'Неверный код: ' + error.message;
+                errBox.innerText = (currentLang === 'tj' ? 'Рамз нодуруст аст: ' : 'Неверный код: ') + (error?.message || 'Проверьте код.');
                 errBox.classList.remove('hidden');
             }
         }
