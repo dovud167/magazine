@@ -96,6 +96,13 @@
             if (user) {
                 window.currentUser = user;
                 updateHeaderAuthButton(true, user);
+
+                // Запускаем общий поток объявлений сразу после входа.
+                // Он не должен зависеть от загрузки профиля пользователя.
+                if (typeof startRealtimeDataListeners === 'function') {
+                    startRealtimeDataListeners();
+                }
+
                 await initializeUserAccount(user);
             } else {
                 window.currentUser = null;
@@ -1272,7 +1279,6 @@ img, video, canvas, svg {
                 renderProfileData();
                 startPresence();
                 await migrateLocalAdsToFirestore();
-                startRealtimeDataListeners();
                 if (isAdminUser(user)) loadAdminDashboard();
             } catch (error) {
                 console.error('TJWORK account sync:', error);
@@ -1297,37 +1303,93 @@ img, video, canvas, svg {
         }
 
         function startRealtimeDataListeners() {
+            if (!window.firebaseDb || !window.currentUser) return;
+
             if (unsubscribeAds) unsubscribeAds();
             if (unsubscribeUsers) unsubscribeUsers();
+
             try {
-                unsubscribeAds = window.fbOnSnapshot(window.fbCollection(window.firebaseDb, 'ads'), snap => {
-                    firestoreAds = snap.docs.map(d => ({ id: d.id, ...d.data(), cat: canonicalizeCategory(d.data().cat) }));
-                    if (firestoreAds.length) {
-                        allAds = firestoreAds;
-                        saveAdsToStorage();
-                    } else {
-                        migrateLocalAdsToFirestore();
+                // ОБЪЯВЛЕНИЯ: одна общая коллекция Firestore для всех авторизованных пользователей.
+                unsubscribeAds = window.fbOnSnapshot(
+                    window.fbCollection(window.firebaseDb, 'ads'),
+                    snap => {
+                        firestoreAds = snap.docs.map(d => ({
+                            id: d.id,
+                            ...d.data(),
+                            cat: canonicalizeCategory(d.data().cat)
+                        }));
+
+                        // Firestore является главным источником данных.
+                        // localStorage используется только как локальный кэш.
+                        if (firestoreAds.length) {
+                            allAds = firestoreAds;
+                            saveAdsToStorage();
+                        } else {
+                            // Если база пока пустая, переносим только объявления
+                            // текущего пользователя, а не чужие локальные данные.
+                            migrateLocalAdsToFirestore();
+                        }
+
+                        renderAds();
+                        if (document.getElementById('page-profile') &&
+                            !document.getElementById('page-profile').classList.contains('hidden')) {
+                            renderProfileData();
+                        }
+                        if (isAdminUser()) renderAdminAds();
+                    },
+                    error => {
+                        console.error('TJWORK ads Firestore listener:', error);
+                        const msg = String(error?.code || error?.message || '');
+                        if (msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions')) {
+                            console.error('Firestore Rules запрещают чтение коллекции ads. Проверьте правила Firestore.');
+                        }
                     }
-                    renderAds();
-                    if (document.getElementById('page-profile') && !document.getElementById('page-profile').classList.contains('hidden')) renderProfileData();
-                    if (isAdminUser()) renderAdminAds();
-                });
-                unsubscribeUsers = window.fbOnSnapshot(window.fbCollection(window.firebaseDb, 'users'), snap => {
-                    firestoreUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderAdminStats();
-                    renderAdminUsers();
-                    renderAdminPublicProfile();
-                    renderChatContacts();
-                });
-            } catch (e) { console.error('TJWORK realtime:', e); }
+                );
+
+                // Пользователи нужны для админки/чата. Ошибка здесь не должна
+                // ломать показ общих объявлений.
+                unsubscribeUsers = window.fbOnSnapshot(
+                    window.fbCollection(window.firebaseDb, 'users'),
+                    snap => {
+                        firestoreUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        renderAdminStats();
+                        renderAdminUsers();
+                        renderAdminPublicProfile();
+                        renderChatContacts();
+                    },
+                    error => console.error('TJWORK users Firestore listener:', error)
+                );
+            } catch (e) {
+                console.error('TJWORK realtime:', e);
+            }
         }
 
         async function migrateLocalAdsToFirestore() {
-            if (!window.currentUser || !allAds.length) return;
-            for (const ad of allAds) {
+            const user = window.currentUser;
+            if (!user || !allAds.length || !window.firebaseDb) return;
+
+            const currentIdentity = String(user.email || user.phoneNumber || '').toLowerCase();
+
+            // Не переносим локальные объявления другого пользователя.
+            const ownLocalAds = allAds.filter(ad =>
+                String(ad.authorEmail || '').toLowerCase() === currentIdentity
+            );
+
+            for (const ad of ownLocalAds) {
                 try {
-                    await window.fbSetDoc(window.fbDoc(window.firebaseDb, 'ads', String(ad.id)), ad, { merge: true });
-                } catch (e) { break; }
+                    await window.fbSetDoc(
+                        window.fbDoc(window.firebaseDb, 'ads', String(ad.id)),
+                        {
+                            ...ad,
+                            authorUid: user.uid,
+                            authorEmail: ad.authorEmail || currentIdentity,
+                            authorNickname: getDisplayNameByEmail(ad.authorEmail || currentIdentity)
+                        },
+                        { merge: true }
+                    );
+                } catch (e) {
+                    console.error('Не удалось перенести объявление в Firestore:', e);
+                }
             }
         }
         
@@ -3131,7 +3193,7 @@ img, video, canvas, svg {
             document.getElementById('createModal').classList.add('hidden');
         }
 
-        function submitNewAd() {
+        async function submitNewAd() {
             const title = document.getElementById('newTitle').value;
             const desc = document.getElementById('newDesc').value;
             const type = document.getElementById('newType').value;
@@ -3171,6 +3233,12 @@ img, video, canvas, svg {
 
             const authorEmail = getCurrentUserEmail();
 
+            if (!window.currentUser || !window.firebaseDb) {
+                errBox.innerText = 'Для публикации объявления необходимо войти в аккаунт.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
             const newAdObj = {
                 id: Date.now(),
                 title,
@@ -3186,18 +3254,32 @@ img, video, canvas, svg {
                 ageInfo,
                 phone,
                 mode: modalMode,
-                authorEmail
+                authorEmail,
+                authorUid: window.currentUser.uid,
+                authorNickname: getDisplayNameByEmail(authorEmail),
+                createdAt: new Date().toISOString()
             };
 
-            allAds.unshift(newAdObj);
-            saveAdsToStorage();
-            if (window.firebaseDb && window.currentUser) {
-                window.fbSetDoc(window.fbDoc(window.firebaseDb, 'ads', String(newAdObj.id)), { ...newAdObj, authorUid: window.currentUser.uid, authorNickname: getDisplayNameByEmail(authorEmail) }, { merge: true })
-                    .catch(e => console.error('Не удалось сохранить объявление в Firestore:', e));
+            // Сначала записываем объявление в Firestore.
+            // Только после успешной записи добавляем его в локальный кэш.
+            try {
+                await window.fbSetDoc(
+                    window.fbDoc(window.firebaseDb, 'ads', String(newAdObj.id)),
+                    newAdObj,
+                    { merge: true }
+                );
+
+                allAds.unshift(newAdObj);
+                saveAdsToStorage();
+
+                closeCreateModal();
+                renderAds();
+                alert('Объявление успешно опубликовано и сохранено для всех пользователей!');
+            } catch (e) {
+                console.error('Не удалось сохранить объявление в Firestore:', e);
+                errBox.innerText = 'Не удалось сохранить объявление в общей базе. Проверьте Firestore Rules. Код: ' + (e.code || 'unknown');
+                errBox.classList.remove('hidden');
             }
-            closeCreateModal();
-            renderAds();
-            alert('Объявление успешно опубликовано!');
         }
 
         function renderAdChatButton(ad) {
