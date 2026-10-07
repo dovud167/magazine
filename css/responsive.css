@@ -1,0 +1,769 @@
+/* =========================================================
+   TJWORK — RESPONSIVE.CSS
+   Телефон / планшет / адаптивность
+   ========================================================= */
+
+
+/* =========================================================
+   HEADER ACTIONS
+   ========================================================= */
+
+.desktop-header-action {
+    display: none !important;
+}
+
+.desktop-header-action.visible {
+    display: none !important;
+}
+
+.mobile-burger-action {
+    display: none !important;
+}
+
+.mobile-burger-action.visible {
+    display: none !important;
+}
+
+
+/* =========================================================
+   DESKTOP
+   ========================================================= */
+
+@media (min-width: 1024px) {
+
+    .desktop-header-action.visible {
+        display: inline-flex !important;
+    }
+
+    .mobile-burger-action {
+        display: none !important;
+    }
+}
+
+
+/* =========================================================
+   TABLET / MOBILE
+   ========================================================= */
+
+@media (max-width: 1023px) {
+
+    .desktop-header-action {
+        display: none !important;
+    }
+
+    .mobile-burger-action.visible {
+        display: flex !important;
+    }
+
+    header .max-w-7xl {
+        min-height: 64px;
+        height: auto;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    header .max-w-7xl > div:last-child {
+        gap: 8px;
+    }
+}
+
+
+/* =========================================================
+   GENERAL RESPONSIVE
+   ========================================================= */
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+    main#mainContent {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #burgerMenu {
+        width: min(92vw, 380px);
+    }
+}
+
+
+/* =========================================================
+   BURGER MENU
+   ========================================================= */
+
+#burgerMenu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+
+    width: min(88vw, 380px);
+    max-height: 0;
+
+    padding: 0 10px;
+    margin: 0;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    overflow: hidden;
+
+    border: 1px solid transparent;
+    border-radius: 24px;
+
+    transform: translateY(-8px) scale(.985);
+    transform-origin: top right;
+
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    transition:
+        max-height .38s cubic-bezier(.22, 1, .36, 1),
+        padding .28s ease,
+        opacity .22s ease,
+        transform .34s cubic-bezier(.22, 1, .36, 1),
+        border-color .22s ease,
+        visibility 0s linear .38s;
+}
+
+
+/* Открытое меню */
+
+#burgerMenu.burger-open {
+    max-height: 72vh;
+
+    padding: 12px 10px;
+
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+
+    border-color: rgba(51, 65, 85, .9);
+
+    transform: translateY(0) scale(1);
+
+    transition:
+        max-height .42s cubic-bezier(.22, 1, .36, 1),
+        padding .28s ease,
+        opacity .2s ease,
+        transform .34s cubic-bezier(.22, 1, .36, 1),
+        border-color .22s ease,
+        visibility 0s linear 0s;
+}
+
+
+/* Элементы меню */
+
+#burgerMenu .burger-item {
+    display: flex;
+    align-items: center;
+
+    min-height: 48px;
+
+    padding: 11px 14px !important;
+
+    border-radius: 16px;
+
+    opacity: 0;
+    transform: translateY(-5px);
+
+    transition:
+        opacity .18s ease,
+        transform .28s cubic-bezier(.22, 1, .36, 1),
+        background-color .2s ease,
+        color .2s ease;
+}
+
+
+#burgerMenu .burger-item:hover {
+    background: rgba(30, 41, 59, .75);
+    color: #fff;
+}
+
+
+/* Анимация элементов */
+
+#burgerMenu.burger-open .burger-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(1) {
+    transition-delay: .03s;
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(2) {
+    transition-delay: .06s;
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(3) {
+    transition-delay: .09s;
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(4) {
+    transition-delay: .12s;
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(5) {
+    transition-delay: .15s;
+}
+
+#burgerMenu.burger-open .burger-item:nth-child(6) {
+    transition-delay: .18s;
+}
+
+
+/* =========================================================
+   SPLASH SCREEN
+   ========================================================= */
+
+#tjworkSplash {
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            circle at 50% 38%,
+            rgba(16, 185, 129, .13),
+            transparent 30%
+        ),
+        #080c14;
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity .28s ease,
+        visibility .28s ease;
+}
+
+
+#tjworkSplash.splash-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+/* Логотип */
+
+.splash-logo-wrap {
+    text-align: center;
+    transform: translateY(4px);
+}
+
+
+.splash-logo {
+    font-size: clamp(42px, 11vw, 82px);
+
+    font-weight: 1000;
+
+    letter-spacing: -0.065em;
+
+    line-height: 1;
+
+    color: #fff;
+
+    text-shadow:
+        0 0 28px rgba(16, 185, 129, .25);
+
+    animation:
+        splashLogoIn .75s cubic-bezier(.22, 1, .36, 1) both,
+        splashGlow 2.1s ease-in-out .6s infinite;
+}
+
+
+.splash-logo .splash-accent {
+    color: #34d399;
+}
+
+
+.splash-caption {
+    margin-top: 14px;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: .28em;
+
+    text-transform: uppercase;
+}
+
+
+/* Полоса загрузки */
+
+.splash-loader {
+    width: min(280px, 68vw);
+
+    height: 4px;
+
+    margin: 22px auto 0;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: rgba(51, 65, 85, .8);
+}
+
+
+.splash-loader span {
+    display: block;
+
+    width: 38%;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            #10b981,
+            #6ee7b7
+        );
+
+    box-shadow:
+        0 0 18px rgba(16, 185, 129, .55);
+
+    animation:
+        splashLoad 1.25s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+
+
+/* =========================================================
+   SPLASH ANIMATIONS
+   ========================================================= */
+
+@keyframes splashLogoIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+@keyframes splashGlow {
+
+    0%,
+    100% {
+        filter: drop-shadow(
+            0 0 0 rgba(52, 211, 153, 0)
+        );
+    }
+
+    50% {
+        filter: drop-shadow(
+            0 0 18px rgba(52, 211, 153, .18)
+        );
+    }
+}
+
+
+@keyframes splashLoad {
+
+    0% {
+        transform: translateX(-150%);
+    }
+
+    100% {
+        transform: translateX(390%);
+    }
+}
+
+
+/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
+
+#tjworkToastStack {
+    position: fixed;
+
+    right: 22px;
+    bottom: 22px;
+
+    z-index: 99999;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    width: min(92vw, 380px);
+
+    pointer-events: none;
+}
+
+
+.tjwork-toast {
+    display: grid;
+
+    grid-template-columns: 44px 1fr auto;
+
+    align-items: start;
+
+    gap: 12px;
+
+    padding: 14px 15px;
+
+    border:
+        1px solid rgba(148, 163, 184, .18);
+
+    border-radius: 20px;
+
+    background:
+        rgba(15, 23, 42, .92);
+
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, .38);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    color: #f8fafc;
+
+    opacity: 0;
+
+    transform:
+        translateY(16px)
+        scale(.97);
+
+    animation:
+        tjworkToastIn .32s cubic-bezier(.22, 1, .36, 1)
+        forwards;
+
+    pointer-events: auto;
+}
+
+
+.tjwork-toast.tjwork-toast-out {
+    animation:
+        tjworkToastOut .26s ease forwards;
+}
+
+
+/* Иконка уведомления */
+
+.tjwork-toast-icon {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 900;
+    font-size: 20px;
+
+    background:
+        rgba(255, 255, 255, .06);
+}
+
+
+.tjwork-toast.success .tjwork-toast-icon {
+    color: #34d399;
+    background: rgba(16, 185, 129, .12);
+}
+
+
+.tjwork-toast.error .tjwork-toast-icon {
+    color: #fb7185;
+    background: rgba(244, 63, 94, .12);
+}
+
+
+.tjwork-toast.warning .tjwork-toast-icon {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, .12);
+}
+
+
+.tjwork-toast.info .tjwork-toast-icon {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, .12);
+}
+
+
+/* Текст уведомления */
+
+.tjwork-toast-title {
+    font-size: 14px;
+
+    font-weight: 900;
+
+    line-height: 1.25;
+
+    margin-top: 2px;
+}
+
+
+.tjwork-toast-text {
+    font-size: 12px;
+
+    line-height: 1.45;
+
+    color: #94a3b8;
+
+    margin-top: 4px;
+}
+
+
+/* Закрытие уведомления */
+
+.tjwork-toast-close {
+    border: 0;
+
+    background: transparent;
+
+    color: #64748b;
+
+    cursor: pointer;
+
+    font-size: 22px;
+
+    line-height: 1;
+
+    padding: 0 2px;
+
+    transition:
+        color .18s ease,
+        transform .18s ease;
+}
+
+
+.tjwork-toast-close:hover {
+    color: #e2e8f0;
+
+    transform: scale(1.08);
+}
+
+
+/* =========================================================
+   CONFIRM MODAL
+   ========================================================= */
+
+#tjworkConfirmOverlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 100000;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(2, 6, 23, .58);
+
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity .22s ease,
+        visibility .22s ease;
+}
+
+
+#tjworkConfirmOverlay.open {
+    opacity: 1;
+
+    visibility: visible;
+
+    pointer-events: auto;
+}
+
+
+.tjwork-confirm {
+    width: min(92vw, 430px);
+
+    border:
+        1px solid rgba(148, 163, 184, .16);
+
+    border-radius: 26px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17, 24, 39, .98),
+            rgba(11, 15, 25, .98)
+        );
+
+    box-shadow:
+        0 26px 80px rgba(0, 0, 0, .5);
+
+    padding: 24px;
+
+    transform:
+        translateY(10px)
+        scale(.97);
+
+    transition:
+        transform .28s cubic-bezier(.22, 1, .36, 1);
+}
+
+
+#tjworkConfirmOverlay.open .tjwork-confirm {
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+
+.tjwork-confirm-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+
+.tjwork-confirm-actions button {
+    flex: 1;
+
+    border-radius: 14px;
+
+    padding: 12px 14px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        transform .18s ease,
+        opacity .18s ease;
+}
+
+
+.tjwork-confirm-actions button:hover {
+    transform: translateY(-1px);
+}
+
+
+.tjwork-confirm-cancel {
+    background: #1e293b;
+
+    border:
+        1px solid #334155;
+
+    color: #e2e8f0;
+}
+
+
+.tjwork-confirm-ok {
+    background: #ef4444;
+
+    border:
+        1px solid #ef4444;
+
+    color: white;
+}
+
+
+/* =========================================================
+   NOTIFICATION ANIMATIONS
+   ========================================================= */
+
+@keyframes tjworkToastIn {
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+@keyframes tjworkToastOut {
+
+    to {
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(.98);
+    }
+}
+
+
+/* =========================================================
+   MOBILE NOTIFICATIONS
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+    #tjworkToastStack {
+        right: 12px;
+        left: 12px;
+        bottom: 12px;
+
+        width: auto;
+    }
+
+    .tjwork-toast {
+        border-radius: 18px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .tjwork-toast,
+    .tjwork-toast.tjwork-toast-out,
+    #tjworkConfirmOverlay,
+    .tjwork-confirm {
+        animation: none !important;
+        transition: none !important;
+    }
+}
