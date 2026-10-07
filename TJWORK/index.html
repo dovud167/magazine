@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <title>TJWORK — Фриланс маркетплейс Таджикистана</title>
+
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/responsive.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#0b0f19] text-slate-100 font-sans lang-ru-active overflow-x-hidden">
+<div aria-hidden="true" id="tjworkSplash">
+<div class="splash-logo-wrap">
+<div class="splash-logo">TJWORK<span class="splash-accent">.</span></div>
+<div class="splash-caption">Фриланс в Таджикистане</div>
+<div aria-label="Загрузка" class="splash-loader"><span></span></div>
+</div>
+</div>
+<!-- HEADER -->
+<header class="bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<a class="text-3xl font-black tracking-tighter text-white flex items-center" href="#" onclick="showPage('home')">
+                    TJWORK<span class="text-emerald-400 font-normal">.</span>
+</a>
+<nav class="hidden lg:flex items-center gap-6 font-medium text-sm text-slate-300">
+<a class="hover:text-emerald-400 transition" href="#" onclick="showPage('home')"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+<a class="hover:text-emerald-400 transition" href="#" onclick="showPage('catalog')"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+<a class="hover:text-emerald-400 transition" href="#" onclick="showPage('useful')"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+<a class="hover:text-emerald-400 transition" href="#" onclick="showPage('help')"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<!-- Десктопные быстрые кнопки: также остаются в бургер-меню на мобильных -->
+<a aria-label="Чат" class="desktop-header-action items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-200 text-sm font-bold hover:bg-slate-800 hover:border-emerald-500/50 hover:text-emerald-300 transition shadow-sm" href="#" id="headerChatLink" onclick="showPage('messages'); return false;">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9.6 9.6 0 0 1-4.1-.9L3 21l1.9-4.7A8.5 8.5 0 1 1 21 11.5Z"></path><path d="M8 11h.01M12 11h.01M16 11h.01"></path></svg>
+<span>Чат</span>
+</a>
+<a aria-label="Админ" class="desktop-header-action visible items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-400/20 bg-amber-400/5 text-amber-300 text-sm font-bold hover:bg-amber-400/10 hover:border-amber-400/40 transition shadow-sm" href="#" id="headerAdminLink" onclick="showPage('admin'); return false;">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3Z"></path><path d="m9.5 12 1.8 1.8 3.7-4"></path></svg>
+<span>Админ</span>
+</a>
+<button aria-label="Сменить язык" class="bg-slate-800 border border-slate-700 w-10 h-10 p-0 rounded-xl text-lg font-bold hover:bg-slate-700 text-slate-200 transition flex items-center justify-center" onclick="toggleLang()" title="Сменить язык">
+<span id="langLabel">🇹🇯</span>
+</button>
+<!-- ДИНАМИЧЕСКАЯ КНОПКА ВХОД / ПРОФИЛЬ -->
+<div id="headerAuthBtnContainer">
+<button class="border border-emerald-500 text-emerald-400 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition shadow-sm" id="mainAuthNavBtn" onclick="openAuthModal()">
+<span class="lang-ru">Вход</span><span class="lang-tj">Ворид шудан</span>
+</button>
+</div>
+<button class="lg:hidden p-2 text-slate-300 hover:text-emerald-400" onclick="toggleBurger()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+<div class="lg:hidden bg-[#111827] border-t border-slate-800 px-4 py-4 space-y-3" id="burgerMenu">
+<a class="burger-item block font-medium py-1 text-slate-300" href="#" onclick="showPage('home'); toggleBurger();"><span class="lang-ru">Главная</span><span class="lang-tj">Асосӣ</span></a>
+<a class="burger-item block font-medium py-1 text-slate-300" href="#" onclick="showPage('catalog'); toggleBurger();"><span class="lang-ru">Каталог услуг</span><span class="lang-tj">Катологи хизматрасониҳо</span></a>
+<a class="burger-item block font-medium py-1 text-slate-300" href="#" onclick="showPage('useful'); toggleBurger();"><span class="lang-ru">Полезное</span><span class="lang-tj">Муфид</span></a>
+<a class="burger-item block font-medium py-1 text-slate-300" href="#" onclick="showPage('help'); toggleBurger();"><span class="lang-ru">Помощь</span><span class="lang-tj">Кӯмак</span></a>
+<a class="burger-item mobile-burger-action font-medium py-1 text-slate-300" href="#" id="burgerChatLink" onclick="showPage('messages'); toggleBurger();"><span class="lang-ru">Чат</span><span class="lang-tj">Чат</span></a>
+<a class="burger-item mobile-burger-action visible font-medium py-1 text-amber-400" href="#" id="burgerAdminLink" onclick="showPage('admin'); toggleBurger();"><span class="lang-ru">Админ</span><span class="lang-tj">Админ</span></a>
+</div>
+</header>
+<!-- БАННЕР -->
+<section class="relative w-full h-[520px] md:h-[600px] flex items-center justify-center overflow-hidden" id="homeHeroBanner">
+<img alt="Freelance Tajikistan" class="absolute inset-0 w-full h-full object-cover opacity-30" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&amp;fit=crop&amp;w=1920&amp;q=80"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/60 to-transparent"></div>
+<div class="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6">
+<span class="inline-block bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs md:text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest backdrop-blur-md" id="bannerBadge">
+<span class="lang-ru">Поиск работы во фрилансе</span>
+<span class="lang-tj">Ҷустуҷӯи кор дар фриланс</span>
+</span>
+<h1 class="text-2xl md:text-4xl lg:text-5xl font-black text-white leading-tight" id="bannerTitle">
+<span class="lang-ru">Найди работу или закажи услуги в Тоҷикистон</span>
+<span class="lang-tj">Кор пайдо кунед ё хизматрасони фармоиш диҳед</span>
+</h1>
+<p class="text-slate-300 text-sm md:text-lg max-w-2xl mx-auto font-medium" id="bannerDesc">
+<span class="lang-ru">Выполняйте задания и получайте оплату.</span>
+<span class="lang-tj">Вазифаҳоро иҷро кунед ва музд гиред.</span>
+</p>
+<div class="flex flex-col items-center gap-4 pt-2" id="homeHeroControls">
+<div class="bg-slate-900/80 backdrop-blur-md p-1.5 rounded-2xl flex gap-2 w-full max-w-md border border-slate-800 shadow-2xl">
+<button class="flex-1 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950 shadow-md transition" id="modeWorkBtn" onclick="setMode('work')">
+<span class="lang-ru">💼 Найти работу</span><span class="lang-tj">💼 Ёфтани кор</span>
+</button>
+<button class="flex-1 py-3.5 px-4 rounded-xl font-bold text-sm text-slate-300 hover:text-white transition" id="modeWorkerBtn" onclick="setMode('worker')">
+<span class="lang-ru">🔍 Найти работника</span><span class="lang-tj">🔍 Ёфтани коргар</span>
+</button>
+</div>
+<button class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-2xl text-sm transition shadow-lg flex items-center gap-2 transform hover:scale-105" onclick="openCreateModal()">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="lang-ru">Добавить объявление</span><span class="lang-tj">Илова кардани эълон</span>
+</button>
+</div>
+</div>
+</section>
+<!-- MAIN CONTENT -->
+<main class="max-w-7xl mx-auto px-4 py-8" id="mainContent">
+<!-- 1. HOME PAGE -->
+<div class="space-y-6" id="page-home">
+<div class="bg-[#111827] p-6 rounded-3xl shadow-lg border border-slate-800 space-y-4" id="homeFiltersBlock">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<h2 class="text-xl font-black text-white flex items-center gap-2">
+<svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="lang-ru">Фильтрация и поиск объявлений</span>
+<span class="lang-tj">Ҷустуҷӯ ва филтр кардани эълонҳо</span>
+</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-emerald-500" id="searchInput" oninput="applyFilters()" placeholder="Поиск по тексту..." type="text"/>
+</div>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="typeSelect" onchange="onTypeChange()">
+<option value="">🌐 Тип: Любой / Намуд: Ҳама</option>
+<option value="remote">💻 Удаленно (Фосилавӣ)</option>
+<option value="onsite">🏢 На месте (Дар маҳал)</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="sectionSelect" onchange="onSectionChange()">
+<option value="">🧩 Все разделы / Ҳама бахшҳо</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="catSelect" onchange="onFilterCategoryChange()">
+<option value="">📂 Все категории / Ҳама категорияҳо</option>
+</select>
+<select class="hidden bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="subjectSelect" onchange="applyFilters()">
+<option value="">📚 Все предметы</option>
+</select>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="regionProv" onchange="updateDistricts(); applyFilters();">
+<option value="">📍 Область / Город / Вилоят</option>
+<option value="Душанбе">🏙 г. Душанбе</option>
+<option value="Худжанд">🏙 г. Худжанд</option>
+<option value="Согд">📍 Согдийская область (Суғд)</option>
+<option value="Хатлон">📍 Хатлонская область (Хатлон)</option>
+<option value="ГБАО">📍 ГБАО (ВМКБ)</option>
+<option value="РРП">📍 РРП (Ноҳияҳои тобеи марказ)</option>
+<option value="Бохтар">🏙 г. Бохтар</option>
+<option value="Куляб">🏙 г. Куляб</option>
+<option value="Истаравшан">🏙 г. Истаравшан</option>
+<option value="Турсунзаде">🏙 г. Турсунзаде</option>
+<option value="Вахдат">🏙 г. Ваҳдат</option>
+<option value="Канибадам">🏙 г. Конибодом</option>
+<option value="Исфара">🏙 г. Исфара</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" disabled="" id="regionDist" onchange="updateVillages(); applyFilters();">
+<option value="">🏘 Район / Микрорайон</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" disabled="" id="regionVill" onchange="applyFilters();">
+<option value="">🏡 Джамоат / Деҳа / Кишлак</option>
+</select>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="text-xl font-bold text-white flex items-center gap-2">
+<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="lang-ru">Актуальные предложения</span>
+<span class="lang-tj">Пешниҳодҳои фаврӣ</span>
+</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="adsList"></div>
+</div>
+</div>
+<!-- 2. CATALOG MAIN PAGE -->
+<div class="hidden space-y-6" id="page-catalog">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<h1 class="text-3xl font-black text-white">
+<span class="lang-ru">Каталог услуг и специалистов</span>
+<span class="lang-tj">Катологи хизматрасониҳо ва мутахассисон</span>
+</h1>
+<button class="bg-emerald-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-emerald-400 transition flex items-center gap-2" onclick="openCreateModal()">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span class="lang-ru">Создать заказ</span><span class="lang-tj">Фармоиш эҷод кардан</span>
+</button>
+</div>
+<div class="bg-[#111827] p-5 rounded-3xl border border-slate-800 shadow-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+<div>
+<h2 class="text-lg font-black text-white">Все разделы работы</h2>
+<p class="text-sm text-slate-400 mt-1">Сначала выберите тип занятости, затем раздел и конкретную категорию.</p>
+</div>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 md:w-56" id="catalogTypeSelect" onchange="renderCatalogSections()">
+<option value="">🌐 Все типы</option>
+<option value="remote">💻 Удалённая работа</option>
+<option value="onsite">🏢 Работа на месте</option>
+</select>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="catalogSectionsGrid"></div>
+</div>
+</div>
+<!-- 3. ДЕТАЛЬНАЯ СТРАНИЦА РАЗДЕЛА -->
+<div class="hidden space-y-6" id="page-section-detail">
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+<button class="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700 transition" onclick="showPage('catalog')">
+                    ← Назад к разделам
+                </button>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500" id="sectionPageTypeSelect" onchange="renderSectionDetailPage()">
+<option value="">🌐 Все типы</option>
+<option value="remote">💻 Удалённо</option>
+<option value="onsite">🏢 На месте</option>
+</select>
+</div>
+<div class="bg-[#111827] p-6 rounded-3xl border border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl" id="sectionDetailIcon">🧩</div>
+<div>
+<h1 class="text-2xl md:text-3xl font-black text-white" id="sectionDetailTitle">Раздел</h1>
+<p class="text-sm text-slate-400 mt-1">Выберите направление, чтобы увидеть объявления только этого типа.</p>
+</div>
+</div>
+</div>
+<div>
+<h2 class="text-lg font-black text-white mb-3">Категории и направления</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="sectionCategoriesGrid"></div>
+</div>
+<div>
+<h2 class="text-lg font-black text-white mb-3">Объявления в разделе</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="sectionDetailAdsList"></div>
+</div>
+</div>
+<!-- 4. ДЕТАЛЬНАЯ СТРАНИЦА ОТДЕЛЬНОЙ КАТЕГОРИИ -->
+<div class="hidden space-y-6" id="page-category-detail">
+<div class="flex items-center justify-between">
+<button class="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700 transition" onclick="showPage('catalog')">
+                    ← Назад к каталогу
+                </button>
+<button class="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm hover:bg-amber-400 transition" onclick="openCreateModal()">
+                    + Добавить объявление сюда
+                </button>
+</div>
+<div class="bg-[#111827] p-6 rounded-3xl border border-slate-800 space-y-2">
+<h1 class="text-2xl md:text-3xl font-black text-white" id="catDetailTitle">Категория</h1>
+<p class="text-sm text-slate-400">Все свежие объявления и специалисты, добавленные в эту категорию пользователями.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="catDetailAdsList"></div>
+</div>
+<!-- 5. USEFUL PAGE -->
+<div class="hidden space-y-6" id="page-useful">
+<h1 class="text-3xl font-black text-white"><span class="lang-ru">Полезные статьи и советы</span><span class="lang-tj">Мақолаҳо ва маслиҳатҳо</span></h1>
+<div class="bg-[#111827] p-6 rounded-2xl shadow-lg border border-slate-800 space-y-4">
+<h3 class="font-bold text-xl text-white">Как безопасно работать и принимать оплату в Таджикистане?</h3>
+<p class="text-sm text-slate-400 leading-relaxed">Используйте проверенные местные карты (DC, Эсхата, Алиф) и договаривайтесь о деталях заказа в чате платформы TJWORK.</p>
+</div>
+</div>
+<!-- 6. HELP PAGE -->
+<div class="hidden space-y-6 max-w-2xl mx-auto" id="page-help">
+<h1 class="text-3xl font-black text-center text-white"><span class="lang-ru">Центр помощи и контакты</span><span class="lang-tj">Маркази кӯмак ва тамос</span></h1>
+<div class="bg-[#111827] p-8 rounded-3xl shadow-lg border border-slate-800 space-y-4">
+<h3 class="font-bold text-xl text-white"><span class="lang-ru">Свяжитесь с администрацией</span><span class="lang-tj">Бо маъмурият тамос гиред</span></h3>
+<p class="text-sm text-slate-400">Если у вас возникли вопросы по работе сайта, предложения или баги, вы можете написать нам напрямую через защищенные кнопки ниже:</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+<a class="contact-social-btn bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-300" href="tel:+992112504410">
+<span class="contact-social-icon">📞</span><span>Телефон</span>
+</a>
+<a class="contact-social-btn bg-emerald-600/10 border border-emerald-500/20 hover:bg-emerald-600/20 text-emerald-300" href="https://wa.me/992112504410" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon whatsapp-icon">
+<svg fill="currentColor" viewbox="0 0 24 24"><path d="M20 3.9A10 10 0 0 0 3.9 20L3 23l3.1-.8A10 10 0 1 0 20 3.9Zm-8 16.3a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-1.9.5.5-1.8-.2-.3a8.2 8.2 0 1 1 6.1 3Zm4.5-6.1c-.2-.1-1.2-.6-1.4-.6s-.3-.1-.5.1-.5.6-.6.7-.2.2-.4.1a6.6 6.6 0 0 1-1.9-1.2 7 7 0 0 1-1.3-1.6c-.1-.2 0-.3.1-.4l.4-.5c.1-.1.1-.2.2-.4v-.3c0-.1-.5-1.2-.7-1.6-.2-.4-.4-.3-.5-.3h-.4c-.2 0-.4.1-.6.3a2.4 2.4 0 0 0-.8 1.8c0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.5.5.2.9.4 1.2.5.5.2.9.2 1.3.1.4-.1 1.2-.5 1.3-1s.2-.9.1-1c0-.2-.2-.2-.4-.3Z"></path></svg>
+</span><span>WhatsApp</span>
+</a>
+<a class="contact-social-btn bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-300" href="https://instagram.com/_mavlonov.10" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon instagram-icon">
+<svg fill="none" stroke="currentColor" stroke-width="1.9" viewbox="0 0 24 24"><rect height="18" rx="5" width="18" x="3" y="3"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" fill="currentColor" r="1" stroke="none"></circle></svg>
+</span><span>Instagram</span>
+</a>
+<a class="contact-social-btn bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-300" href="https://www.facebook.com/profile.php?id=100086152061971" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon facebook-icon">
+<svg fill="currentColor" viewbox="0 0 24 24"><path d="M13.6 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.7v8h3.4Z"></path></svg>
+</span><span>Facebook</span>
+</a>
+<a class="contact-social-btn bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 text-sky-300" href="https://t.me/techlab_x" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon telegram-icon">
+<svg fill="currentColor" viewbox="0 0 24 24"><path d="m21.4 4.6-3.1 14.6c-.2 1-.8 1.2-1.6.8l-4.4-3.3-2.1 2c-.2.2-.4.4-.8.4l.3-4.5 8.1-7.3c.4-.4-.1-.6-.6-.2L7.2 13 2.9 11.7c-.9-.3-.9-.9.2-1.3L20 3.9c.8-.3 1.5.2 1.4.7Z"></path></svg>
+</span><span>Telegram</span>
+</a>
+<a class="contact-social-btn bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-300" href="mailto:dovud0300@gmail.com">
+<span aria-hidden="true" class="contact-social-icon">✉️</span><span>Gmail</span>
+</a>
+</div>
+</div>
+</div>
+<!-- 6. СТРАНИЦА ПРОФИЛЯ -->
+<div class="hidden space-y-6 max-w-4xl mx-auto" id="page-profile">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+<div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
+<div class="relative group shrink-0">
+<div class="w-28 h-28 md:w-36 md:h-36 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 shadow-xl">
+<div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl md:text-5xl font-black text-white select-none" id="profileAvatarInitial"></div>
+<img alt="Аватар" class="hidden w-full h-full object-cover rounded-full bg-slate-900" id="profileAvatarImg" src=""/>
+</div>
+<label class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold cursor-pointer transition" for="avatarFileInput">
+                            Сменить фото
+                        </label>
+<input accept="image/*" class="hidden" id="avatarFileInput" onchange="handleAvatarUpload(event)" type="file"/>
+</div>
+<div class="flex-1 space-y-4 text-center md:text-left w-full">
+<div class="flex flex-col md:flex-row items-center justify-between gap-4">
+<div>
+<h2 class="text-xl md:text-2xl font-black text-white" id="profileUserEmailTitle">user@tjwork.tj</h2>
+<div class="text-emerald-400 font-bold text-sm mt-1" id="profileNicknameTitle">@nickname</div>
+<p class="text-xs text-emerald-400 font-semibold mt-0.5">✓ Верифицированный фрилансер TJWORK</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition" onclick="openEditProfileModal()">
+                                    Редактировать профиль
+                                </button>
+<button class="bg-red-500/10 border border-red-500/30 text-red-400 font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-500/20 transition" onclick="handleLogout()">
+                                    Выйти
+                                </button>
+</div>
+</div>
+<div class="flex justify-center md:justify-start gap-6 py-2 border-y border-slate-800 text-sm">
+<div><b class="text-white" id="statAdsCount">0</b> <span class="text-slate-400">объявлений</span></div>
+<div><b class="text-white" id="statReviewsCount">0</b> <span class="text-slate-400">отзывов</span></div>
+<div><b class="text-amber-400" id="statRating">⭐ 5.0</b> <span class="text-slate-400">рейтинг</span></div>
+</div>
+<div class="space-y-1.5 text-xs md:text-sm text-slate-300">
+<div>🎂 <b>День рождения:</b> <span class="text-slate-400" id="profileDisplayDob">02.11.2010</span></div>
+<div>📞 <b>Номер телефона:</b> <span class="text-emerald-400 font-bold" id="profileDisplayPhone">+992 00 000 0000</span></div>
+<div>📝 <b>Биография:</b> <span class="text-slate-400" id="profileDisplayBio">Пока ничего не указано.</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<button class="py-3 px-4 rounded-2xl font-bold text-sm bg-emerald-500 text-slate-950 transition shadow-lg" id="tabBtnAds" onclick="switchProfileTab('ads')">
+                    📦 Мои объявления (<span id="tabAdsCountNum">0</span>)
+                </button>
+<button class="py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg" id="tabBtnReviews" onclick="switchProfileTab('reviews')">
+                    💬 Отзывы клиентов (<span id="tabReviewsCountNum">0</span>)
+                </button>
+<button class="py-3 px-4 rounded-2xl font-bold text-sm bg-[#111827] border border-slate-800 text-slate-300 hover:text-white transition shadow-lg" id="tabBtnSettings" onclick="switchProfileTab('settings')">
+                    ⚙️ Безопасность и данные
+                </button>
+</div>
+<div class="space-y-4" id="profileTabAds">
+<div class="flex justify-between items-center">
+<h3 class="text-lg font-bold text-white">Список опубликованных вами объявлений</h3>
+<button class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-bold hover:bg-emerald-500/20" onclick="openCreateModal()">+ Добавить еще</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="userAdsContainer"></div>
+</div>
+<div class="hidden space-y-4" id="profileTabReviews">
+<div class="flex justify-between items-center">
+<h3 class="text-lg font-bold text-white">Отзывы других пользователей о вас</h3>
+<button class="text-xs bg-amber-500 text-slate-950 px-3 py-1.5 rounded-xl font-bold hover:bg-amber-400" onclick="openAddReviewModal()">+ Оставить отзыв этому профилю</button>
+</div>
+<div class="space-y-3" id="userReviewsContainer"></div>
+</div>
+<div class="hidden space-y-6 bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl" id="profileTabSettings">
+<h3 class="text-xl font-black text-white">Управление аккаунтом и безопасность</h3>
+<div class="space-y-4">
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Ваш Gmail / Email аккаунта:</label>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-400 rounded-xl px-4 py-3 text-sm outline-none cursor-not-allowed" id="settingsEmailInput" readonly="" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Номер телефона для связи:</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="settingsPhoneInput" placeholder="+992 00 000 0000" type="text"/>
+<button class="bg-emerald-500 text-slate-950 font-bold px-5 py-3 rounded-xl text-sm hover:bg-emerald-400 transition" onclick="savePhoneNumber()">Изменить номер</button>
+</div>
+</div>
+<div class="pt-4 border-t border-slate-800 space-y-3">
+<h4 class="font-bold text-sm text-white">Смена пароля входа</h4>
+<div class="text-red-400 text-xs hidden" id="passwordChangeError"></div>
+<div class="text-emerald-400 text-xs hidden" id="passwordChangeSuccess"></div>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="currentPasswordInput" placeholder="Текущий пароль (для подтверждения)" type="password"/>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="newPasswordInput" placeholder="Новый пароль" type="password"/>
+<button class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition" onclick="handleChangePassword()">
+                            Сменить пароль через Firebase
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- 7. СТРАНИЦА СООБЩЕНИЙ -->
+<div class="hidden max-w-6xl mx-auto" id="page-messages">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl overflow-hidden shadow-xl min-h-[620px] grid grid-cols-1 md:grid-cols-[300px_1fr]">
+<aside class="border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40">
+<div class="p-5 border-b border-slate-800">
+<h2 class="text-xl font-black text-white">💬 Сообщения</h2>
+<p class="text-xs text-slate-500 mt-1">Общайтесь с исполнителями и заказчиками прямо на TJWORK.</p>
+</div>
+<div class="p-2 space-y-1 max-h-[540px] overflow-y-auto" id="chatContactsList">
+<div class="text-center text-slate-500 text-sm py-8">Загрузка диалогов...</div>
+</div>
+</aside>
+<section class="flex flex-col min-h-[620px]">
+<div class="p-5 border-b border-slate-800" id="chatHeader">
+<div class="font-bold text-white">Выберите диалог</div>
+<div class="text-xs text-slate-500 mt-1">Здесь появятся ваши сообщения.</div>
+</div>
+<div class="flex-1 p-5 space-y-3 overflow-y-auto bg-[#0b0f19]" id="chatMessages">
+<div class="h-full min-h-[400px] flex items-center justify-center text-slate-600 text-sm">Нет выбранного диалога</div>
+</div>
+<div class="p-4 border-t border-slate-800 flex gap-2">
+<input class="flex-1 bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="chatMessageInput" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Напишите сообщение..."/>
+<button class="bg-emerald-500 text-slate-950 font-bold px-5 rounded-xl hover:bg-emerald-400 transition" onclick="sendChatMessage()">Отправить</button>
+</div>
+</section>
+</div>
+</div>
+<!-- 8. СТРАНИЦА АДМИНИСТРАТОРА -->
+<div class="hidden max-w-6xl mx-auto space-y-6" id="page-admin">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+<div class="flex flex-col md:flex-row items-center gap-6">
+<div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-cyan-400 to-blue-500 shadow-lg shrink-0">
+<div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-3xl font-black text-white select-none" id="adminProfileInitial"></div>
+<img alt="Профиль администратора" class="hidden w-full h-full rounded-full object-cover" id="adminProfileAvatar" src=""/>
+</div>
+<div class="flex-1 text-center md:text-left">
+<div class="inline-flex px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold mb-2" id="adminPublicBadge">🛡 Администратор TJWORK</div>
+<h2 class="text-2xl md:text-3xl font-black text-white" id="adminProfileName">Администратор</h2>
+<div class="text-xs text-slate-500 mt-1" id="adminProfileEmail">dovud0300@gmail.com</div>
+<div class="text-sm text-slate-300 mt-3" id="adminProfileDob"></div>
+<p class="text-slate-400 text-sm mt-2" id="adminProfileBio">Профиль администратора загружается...</p>
+</div>
+<button class="hidden bg-slate-800 border border-slate-700 text-white font-bold px-5 py-3 rounded-xl hover:bg-slate-700 transition" id="adminContactBtn" onclick="startAdminChat()">💬 Написать админу</button>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800">
+<div class="mb-4">
+<h3 class="font-black text-white text-lg">📞 Связь с администратором</h3>
+<p class="text-xs text-slate-500 mt-1">Выберите удобный способ связи.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+<a class="contact-social-btn bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-300" href="tel:+992112504410">
+<span class="contact-social-icon">📞</span><span>Телефон</span>
+</a>
+<a class="contact-social-btn bg-emerald-600/10 border border-emerald-500/20 hover:bg-emerald-600/20 text-emerald-300" href="https://wa.me/992112504410" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon whatsapp-icon">
+<svg fill="currentColor" viewbox="0 0 24 24"><path d="M20 3.9A10 10 0 0 0 3.9 20L3 23l3.1-.8A10 10 0 1 0 20 3.9Zm-8 16.3a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-1.9.5.5-1.8-.2-.3a8.2 8.2 0 1 1 6.1 3Zm4.5-6.1c-.2-.1-1.2-.6-1.4-.6s-.3-.1-.5.1-.5.6-.6.7-.2.2-.4.1a6.6 6.6 0 0 1-1.9-1.2 7 7 0 0 1-1.3-1.6c-.1-.2 0-.3.1-.4l.4-.5c.1-.1.1-.2.2-.4v-.3c0-.1-.5-1.2-.7-1.6-.2-.4-.4-.3-.5-.3h-.4c-.2 0-.4.1-.6.3a2.4 2.4 0 0 0-.8 1.8c0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.5.5.2.9.4 1.2.5.5.2.9.2 1.3.1.4-.1 1.2-.5 1.3-1s.2-.9.1-1c0-.2-.2-.2-.4-.3Z"></path></svg>
+</span><span>WhatsApp</span>
+</a>
+<a class="contact-social-btn bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-300" href="https://instagram.com/_mavlonov.10" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon instagram-icon">
+<svg fill="none" stroke="currentColor" stroke-width="1.9" viewbox="0 0 24 24"><rect height="18" rx="5" width="18" x="3" y="3"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" fill="currentColor" r="1" stroke="none"></circle></svg>
+</span><span>Instagram</span>
+</a>
+<a class="contact-social-btn bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-300" href="https://www.facebook.com/profile.php?id=100086152061971" rel="noopener noreferrer" target="_blank">
+<span aria-hidden="true" class="contact-social-icon facebook-icon">
+<svg fill="currentColor" viewbox="0 0 24 24"><path d="M13.6 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.7v8h3.4Z"></path></svg>
+</span><span>Facebook</span>
+</a>
+</div>
+</div>
+</div>
+<div class="hidden space-y-6" id="adminControls">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Пользователей</div><div class="text-3xl font-black text-white mt-1" id="adminUsersCount">0</div></div>
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Объявлений</div><div class="text-3xl font-black text-white mt-1" id="adminAdsCount">0</div></div>
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5"><div class="text-xs text-slate-500">Сейчас онлайн</div><div class="text-3xl font-black text-emerald-400 mt-1" id="adminOnlineCount">0</div></div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 space-y-4">
+<div><h3 class="font-black text-white text-lg">🚫 Заблокировать пользователя</h3><p class="text-xs text-slate-500 mt-1">Можно указать email и срок блокировки.</p></div>
+<input class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500" id="adminBanEmail" placeholder="Email пользователя" type="email"/>
+<select class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 text-sm outline-none" id="adminBanDuration">
+<option value="permanent">Навсегда</option><option value="3600000">1 час</option><option value="86400000">1 день</option><option value="604800000">7 дней</option><option value="2592000000">30 дней</option>
+</select>
+<button class="w-full bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-400 transition" onclick="adminBanByEmail()">Заблокировать</button>
+</div>
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+<h3 class="font-black text-white text-lg mb-3">👥 Пользователи</h3>
+<div class="space-y-2 max-h-72 overflow-y-auto" id="adminUsersList"></div>
+</div>
+</div>
+<div class="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+<div class="flex items-center justify-between gap-3 mb-4"><div><h3 class="font-black text-white text-lg">📦 Все объявления</h3><p class="text-xs text-slate-500">Удаление здесь удаляет объявление для всех пользователей.</p></div></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="adminAdsList"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- MODAL AUTH -->
+<div class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" id="authModal">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+<button class="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-xl" onclick="closeAuthModal()">✕</button>
+<div class="space-y-4 pt-2" id="loggedOutView">
+<h2 class="text-2xl font-black text-center text-white" id="authTitle">Вход в систему</h2>
+<div class="text-red-400 text-xs text-center hidden" id="authError"></div>
+<!-- Выбор метода входа: Email или Телефон -->
+<div class="flex gap-2 bg-slate-900 p-1 rounded-xl">
+<button class="flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-500 text-slate-950 transition" id="authTabEmail" onclick="switchAuthMethod('email')">Email / Gmail</button>
+<button class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-300 transition" id="authTabPhone" onclick="switchAuthMethod('phone')">Телефон</button>
+</div>
+<!-- Поля для Email / Пароля -->
+<div class="space-y-3" id="emailAuthFields">
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="authEmail" placeholder="Email (например: name@gmail.com)" type="email"/>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="authPassword" placeholder="Пароль" type="password"/>
+<button class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition" id="authSubmitBtn" onclick="handleAuthEmail()">Войти</button>
+</div>
+<!-- Поля для Телефона -->
+<div class="space-y-3 hidden" id="phoneAuthFields">
+<label class="block text-xs font-bold text-slate-400" for="authPhoneInput">
+<span class="lang-ru">Номер телефона</span><span class="lang-tj">Рақами телефон</span>
+</label>
+<input autocomplete="tel" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="authPhoneInput" inputmode="tel" placeholder="+992 00 000 0000" type="tel"/>
+<div class="min-h-0" id="recaptcha-container"></div>
+<button class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition" onclick="sendPhoneVerificationCode()">
+<span class="lang-ru">Получить код из СМС</span><span class="lang-tj">Гирифтани рамз тавассути SMS</span>
+</button>
+<div class="space-y-2 hidden pt-2" id="smsCodeContainer">
+<input autocomplete="one-time-code" class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500" id="authSmsCode" inputmode="numeric" maxlength="6" placeholder="Введите 6-значный код из СМС" type="text"/>
+<button class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-amber-400 transition" onclick="verifyPhoneCode()">
+<span class="lang-ru">Подтвердить код</span><span class="lang-tj">Тасдиқ кардани рамз</span>
+</button>
+</div>
+</div>
+<div class="text-center pt-2" id="toggleAuthModeContainer">
+<button class="text-xs text-emerald-400 font-semibold hover:underline" onclick="toggleAuthMode()">
+<span id="authToggleText">Нет аккаунта? Зарегистрироваться</span>
+</button>
+</div>
+<div class="pt-4 border-t border-slate-800 space-y-2">
+<p class="text-xs text-center text-slate-500 mb-3">Или войдите через соцсети:</p>
+<div class="flex justify-center items-center gap-4">
+<button class="w-12 h-12 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center hover:bg-slate-800 shadow-sm transition transform hover:scale-105" onclick="loginWithSocial('google')" title="Google / Gmail">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
+</svg>
+</button>
+<button class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:bg-[#166fe5] shadow-sm transition transform hover:scale-105" onclick="loginWithSocial('facebook')" title="Facebook">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path>
+</svg>
+</button>
+<button class="w-12 h-12 rounded-full bg-black text-white border border-slate-700 flex items-center justify-center hover:bg-slate-900 shadow-sm transition transform hover:scale-105" onclick="loginWithSocial('apple')" title="Apple">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.83 5.09c.62-.75 1.04-1.79.93-2.83-.92.04-2.03.62-2.68 1.37-.56.64-1.06 1.68-.93 2.7 1.04.08 2.06-.51 2.68-1.24z"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- MODAL EDIT PROFILE -->
+<div class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" id="editProfileModal">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-black text-white">Редактировать профиль</h3>
+<button class="text-slate-400 hover:text-white font-bold text-xl" onclick="closeEditProfileModal()">✕</button>
+</div>
+<div class="space-y-3">
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Никнейм:</label>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="editNicknameInput" maxlength="30" placeholder="Например: DovudDev" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Дата рождения (например 02.11.2010):</label>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="editDobInput" placeholder="02.11.2010" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Биографический текст (о себе):</label>
+<textarea class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="editBioInput" placeholder="Расскажите о своих навыках..." rows="3"></textarea>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Номер телефона:</label>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="editPhoneInput" placeholder="+992 00 000 0000" type="text"/>
+</div>
+</div>
+<button class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition" onclick="saveProfileChanges()">Сохранить изменения</button>
+</div>
+</div>
+<!-- MODAL ADD REVIEW -->
+<div class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" id="addReviewModal">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-black text-white">Оставить отзыв</h3>
+<button class="text-slate-400 hover:text-white font-bold text-xl" onclick="closeAddReviewModal()">✕</button>
+</div>
+<div class="space-y-3">
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Ваша оценка (от 1 до 5 звезд):</label>
+<select class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none" id="reviewRatingInput">
+<option value="5">⭐⭐⭐⭐⭐ (5 / 5 Отлично)</option>
+<option value="4">⭐⭐⭐⭐ (4 / 5 Хорошо)</option>
+<option value="3">⭐⭐⭐ (3 / 5 Нормально)</option>
+<option value="2">⭐⭐ (2 / 5 Плохо)</option>
+<option value="1">⭐ (1 / 5 Ужасно)</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Текст отзыва:</label>
+<textarea class="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="reviewTextInput" placeholder="Напишите как прошла работа с этим специалистом..." rows="3"></textarea>
+</div>
+</div>
+<button class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-amber-400 transition" onclick="submitNewReview()">Отправить отзыв</button>
+</div>
+</div>
+<!-- MODAL CREATE AD -->
+<div class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4" id="createModal">
+<div class="bg-[#111827] border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-black text-white">Создать новое объявление</h3>
+<button class="text-slate-400 hover:text-white font-bold text-xl" onclick="closeCreateModal()">✕</button>
+</div>
+<div class="text-red-400 text-xs hidden" id="createError"></div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Тип объявления:</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 text-slate-950 transition" id="modalModeWorkBtn" onclick="setModalMode('work')" type="button">
+<span class="lang-ru">🔍 Я работодатель</span><span class="lang-tj">💼 Ман коргар ҳастам</span>
+</button>
+<button class="py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-900 border border-slate-800 text-slate-300 transition" id="modalModeWorkerBtn" onclick="setModalMode('worker')" type="button">
+<span class="lang-ru">💼 Я работник</span><span class="lang-tj">🔍 Ман корфармо ҳастам</span>
+</button>
+</div>
+</div>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="newTitle" placeholder="Название (например: Сантехник срочно)" type="text"/>
+<textarea class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="newDesc" placeholder="Подробное описание работы..." rows="3"></textarea>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none" id="newType" onchange="onModalTypeChange()">
+<option value="remote">Удаленно (Фосилавӣ)</option>
+<option value="onsite">На месте (Дар маҳал)</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none" id="newSection" onchange="onModalSectionChange()">
+<option value="">🧩 Выберите раздел / сферу</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none" id="newCat" onchange="onModalCategoryChange()">
+<option value="">📂 Выберите категорию</option>
+</select>
+<select class="hidden md:col-span-3 col-span-1 bg-slate-900 border border-emerald-500/30 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" id="newSubject">
+<option value="">📚 Выберите предмет / Фанро интихоб кунед</option>
+</select>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none" id="modalProv" onchange="updateModalDistricts()">
+<option value="">Область / Город</option>
+<option value="Душанбе">Душанбе</option>
+<option value="Худжанд">Худжанд</option>
+<option value="Согд">Согд</option>
+<option value="Хатлон">Хатлон</option>
+<option value="ГБАО">ГБАО</option>
+<option value="РРП">РРП</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none" disabled="" id="modalDist" onchange="updateModalVillages()">
+<option value="">Район / Мкр</option>
+</select>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-2 py-2 text-xs outline-none" disabled="" id="modalVill">
+<option value="">Джамоат / Деҳа</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Бюджет / Цена:</label>
+<div class="grid grid-cols-3 gap-2">
+<input class="col-span-2 bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="newPriceNum" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Только цифры" type="text"/>
+<select class="bg-slate-900 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" id="newCurrency">
+<option value="сомони">сомони</option>
+<option value="$">$ (USD)</option>
+<option value="рубл">рубл</option>
+</select>
+</div>
+</div>
+<div class="space-y-1" id="ageFieldContainer"></div>
+<div class="space-y-1">
+<label class="text-xs font-bold text-slate-400">Номер телефона для связи:</label>
+<input class="w-full bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" id="newPhone" placeholder="+992 00 000 0000" type="text"/>
+</div>
+<button class="w-full bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl hover:bg-emerald-400 transition" onclick="submitNewAd()">Опубликовать</button>
+</div>
+</div>
+<!-- SCRIPTS & LOGIC -->
+
+<div aria-atomic="true" aria-live="polite" id="tjworkToastStack"></div>
+<div aria-hidden="true" id="tjworkConfirmOverlay">
+<div aria-labelledby="tjworkConfirmTitle" aria-modal="true" class="tjwork-confirm" role="dialog">
+<div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl mb-4">⚠</div>
+<h3 class="text-lg font-black text-white" id="tjworkConfirmTitle">Подтверждение</h3>
+<p class="text-sm text-slate-400 mt-2 leading-6" id="tjworkConfirmText"></p>
+<div class="tjwork-confirm-actions">
+<button class="tjwork-confirm-cancel" id="tjworkConfirmCancel" type="button">Отмена</button>
+<button class="tjwork-confirm-ok" id="tjworkConfirmOk" type="button">Удалить</button>
+</div>
+</div>
+</div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
